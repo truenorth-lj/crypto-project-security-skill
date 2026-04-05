@@ -1,1 +1,8 @@
 .claude/
+.agents/
+.factory/
+.openhands/
+.trae/
+.windsurf/
+skills/
+skills-lock.json

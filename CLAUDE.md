@@ -19,7 +19,11 @@ This repo contains a Claude Code skill (`SKILL.md`) for performing comprehensive
     └── examples/          # Example audit reports from validation testing
         ├── drift-protocol-pre-hack.md   # CRITICAL -- validated against actual $285M hack
         ├── aave-top-protocol.md         # LOW -- gold standard lending protocol
-        └── zeta-markets-tail-protocol.md # HIGH -- defunct protocol with transparency gaps
+        ├── zeta-markets-tail-protocol.md # HIGH -- defunct protocol with transparency gaps
+        ├── ethena-stablecoin.md          # MEDIUM -- custodial/CEX counterparty risks
+        ├── pendle-yield-tokenization.md  # MEDIUM -- immutable contracts, weak multisig
+        ├── jupiter-solana-dex.md         # MEDIUM -- strong audits, unverified governance
+        └── stargate-bridge.md           # MEDIUM -- cross-chain/bridge risk test case
 ```
 
 ## Skill Installation

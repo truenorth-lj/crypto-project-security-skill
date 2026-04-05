@@ -25,17 +25,21 @@ Given a protocol name, the skill:
 
 ## Test Results
 
-Validated against three protocols:
+Validated against seven protocols spanning different risk levels, protocol types, chains, and TVL tiers:
 
 | Protocol | Type | TVL | Risk Rating | GoPlus | Audit Date | Key Finding |
 |----------|------|-----|-------------|--------|------------|-------------|
-| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | N/A (Solana) | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
-| [**Aave**](docs/examples/aave-top-protocol.md) | Top | $23.6B | **LOW** | LOW (0 HIGH / 1 MED) | 2026-04-05 | Confirmed robust DAO governance + dual timelock + 6yr track record |
-| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Tail | $0 | **HIGH** | N/A (Solana) | 2026-04-05 | Flagged no audits, closed-source, undisclosed multisig config |
+| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Perps (Solana) | $550M | **CRITICAL** | N/A (Solana) | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
+| [**Aave**](docs/examples/aave-top-protocol.md) | Lending (Multi) | $23.6B | **LOW** | LOW (0 HIGH / 1 MED) | 2026-04-05 | Confirmed robust DAO governance + dual timelock + 6yr track record |
+| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Perps (Solana) | $0 | **HIGH** | N/A (Solana) | 2026-04-05 | Flagged no audits, closed-source, undisclosed multisig config |
+| [**Ethena (USDe)**](docs/examples/ethena-stablecoin.md) | Stablecoin (ETH) | $6.64B | **MEDIUM** | LOW (0 HIGH / 2 MED) | 2026-04-05 | Strong smart contract security offset by custodial/CEX counterparty and funding rate risks |
+| [**Pendle**](docs/examples/pendle-yield-tokenization.md) | Yield (Multi) | $1.93B | **MEDIUM** | LOW (0 HIGH / 1 MED) | 2026-04-05 | Immutable core contracts + doxxed team, but 2/4 multisig, no documented timelock, 49% TVL decline |
+| [**Jupiter**](docs/examples/jupiter-solana-dex.md) | DEX/Perps (Solana) | $1.71B | **MEDIUM** | N/A (Solana) | 2026-04-05 | 10+ audits + tri-oracle, but DAO paused, no insurance fund, unverified multisig config |
+| [**Stargate**](docs/examples/stargate-bridge.md) | Bridge (Multi) | $115.8M | **MEDIUM** | LOW (0 HIGH / 1 MED) | 2026-04-05 | 4yr track record + $10M bounty, but only 2 DVNs, no confirmed timelock, DAO dissolved post-acquisition |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
 
-**GoPlus integration note:** Drift and Zeta are Solana-native protocols; GoPlus token security API supports EVM chains only. For Aave (EVM), GoPlus confirmed the token contract is clean -- the only flag is the proxy pattern, which is expected for a DAO-governed upgradeable protocol.
+**GoPlus integration note:** Drift, Zeta, and Jupiter are Solana-native protocols; GoPlus token security API supports EVM chains only. For EVM protocols (Aave, Ethena, Pendle, Stargate), GoPlus provided automated token contract scanning that complemented the governance-focused manual analysis.
 
 ## Installation
 

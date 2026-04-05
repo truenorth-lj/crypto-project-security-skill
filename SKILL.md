@@ -76,12 +76,45 @@ Before deep analysis, run a quick triage to decide audit priority:
    - GoPlus: admin/deployer address flagged as malicious
 5. **Quick Triage Score** (compute for the report, 0-100):
    ```
-   Start at 100, subtract:
-   - 25 per CRITICAL red flag (honeypot, TVL=0, hidden owner, owner changes balances)
-   - 15 per HIGH red flag (closed-source, no audits, anon team + no track record)
-   - 8 per MEDIUM red flag (proxy without timelock, mintable, age <6mo with high TVL)
-   - 5 per INFO concern (single oracle, no bug bounty, undisclosed config)
-   Floor at 0. Score meaning: 80-100 = LOW risk, 50-79 = MEDIUM, 20-49 = HIGH, 0-19 = CRITICAL
+   Start at 100. Subtract EXACTLY the listed points for each flag that applies.
+   Do NOT adjust, round, or add mitigating bonuses -- the score is mechanical.
+
+   CRITICAL flags (-25 each):
+     [ ] GoPlus: is_honeypot = 1
+     [ ] GoPlus: honeypot_with_same_creator = 1
+     [ ] GoPlus: hidden_owner = 1
+     [ ] GoPlus: owner_change_balance = 1
+     [ ] TVL = $0
+     [ ] Admin/deployer address flagged as malicious
+
+   HIGH flags (-15 each):
+     [ ] Closed-source contracts (is_open_source = 0)
+     [ ] Zero audits listed on DeFiLlama
+     [ ] Anonymous team with no prior track record
+     [ ] GoPlus: selfdestruct = 1
+     [ ] GoPlus: can_take_back_ownership = 1
+     [ ] No multisig (single EOA admin key)
+
+   MEDIUM flags (-8 each):
+     [ ] GoPlus: is_proxy = 1 AND no timelock on upgrades
+     [ ] GoPlus: is_mintable = 1
+     [ ] Protocol age < 6 months with TVL > $50M
+     [ ] TVL dropped > 30% in 90 days
+     [ ] Multisig threshold < 3 signers (e.g., 2/N)
+     [ ] GoPlus: slippage_modifiable = 1
+     [ ] GoPlus: transfer_pausable = 1
+
+   LOW flags (-5 each):
+     [ ] No documented timelock on admin actions
+     [ ] No bug bounty program
+     [ ] Single oracle provider
+     [ ] GoPlus: is_blacklisted = 1
+     [ ] Insurance fund / TVL < 1% or undisclosed
+     [ ] Undisclosed multisig signer identities
+     [ ] DAO governance paused or dissolved
+
+   Floor at 0. Score meaning:
+     80-100 = LOW risk | 50-79 = MEDIUM | 20-49 = HIGH | 0-19 = CRITICAL
    ```
 6. **Quantitative baselines** (compute these for the report):
    - `Insurance Fund / TVL ratio` (healthy: >5%, concerning: <1%)
