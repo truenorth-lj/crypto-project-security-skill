@@ -49,7 +49,7 @@ The skill correctly distinguished high-risk from low-risk protocols and identifi
 npx skills add truenorth-lj/crypto-project-security-skill
 ```
 
-### Via [ClawHub](https://clawhub.ai/truenorth-lj/crypto-project-security-skill) (OpenClaw)
+### Via [ClawHub](https://clawhub.ai/truenorth-lj/defi-security-audit) (OpenClaw)
 
 ```bash
 clawhub install truenorth-lj/crypto-project-security-skill
