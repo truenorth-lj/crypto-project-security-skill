@@ -26,32 +26,41 @@ Quick quantitative scan before deep analysis. Any single red flag escalates the 
 | Anonymous team | Reduced accountability, higher social engineering risk |
 | Closed-source contracts | Cannot verify security claims |
 
-### 2. Five-Pillar Assessment
+### 2. Six-Pillar Assessment
 
 Each pillar receives an independent risk rating (LOW / MEDIUM / HIGH / CRITICAL):
 
-1. **Governance & Admin** -- Who holds the keys, and what can they do?
+1. **Governance & Admin** -- Who holds the keys, and what can they do? Includes timelock bypass detection and token concentration / whale risk for on-chain governance.
 2. **Oracle & Price Feeds** -- Can prices be manipulated or fabricated?
 3. **Economic Mechanism** -- Does the math hold under stress?
 4. **Smart Contract** -- Has the code been reviewed and tested?
-5. **Operational Security** -- Is the team trustworthy and prepared?
+5. **Cross-Chain & Bridge** -- Are multi-chain deployments and bridge dependencies secure? (N/A for single-chain protocols with no bridge dependencies.)
+6. **Operational Security** -- Is the team trustworthy and prepared?
 
 ### 3. Quantitative Metrics
 
 Subjective risk ratings are supplemented with comparable numbers:
 
-| Metric | Formula | Healthy Threshold |
-|--------|---------|-------------------|
-| Insurance/TVL Ratio | Insurance Fund Balance / Total TVL | >5% |
-| Audit Coverage Score | sum(audits * recency_weight) | >3.0 |
-| Timelock Duration | Hours of delay on admin actions | >48h |
-| Multisig Strength | Threshold / Total Signers | >0.6 |
+| Metric | Formula | Risk Thresholds |
+|--------|---------|-----------------|
+| Insurance/TVL Ratio | Insurance Fund Balance / Total TVL | >5% = LOW, 1-5% = MEDIUM, <1% = HIGH |
+| Audit Coverage Score | sum(1.0 if <1yr, 0.5 if 1-2yr, 0.25 if >2yr) | >=3.0 = LOW, 1.5-2.99 = MEDIUM, <1.5 = HIGH |
+| Timelock Duration | Hours of delay on admin actions | >48h = LOW, 24-48h = MEDIUM, <24h = HIGH |
+| Multisig Strength | Threshold / Total Signers | >0.6 = LOW, 0.4-0.6 = MEDIUM, <0.4 = HIGH |
+| Quick Triage Score | 100 minus penalty per red flag (see SKILL.md) | 80-100 = LOW, 50-79 = MEDIUM, 20-49 = HIGH, 0-19 = CRITICAL |
 
 ### 4. Peer Comparison
 
 Risk ratings are meaningless in isolation. A 24-hour timelock is excellent if peers average 0 hours, but concerning if peers average 7 days. Every audit includes a comparison table against 2-3 protocols of the same type and chain.
 
-### 5. Historical Attack Pattern Matching
+### 5. Timelock Bypass Detection
+
+A timelock is only as strong as its bypass. The audit explicitly checks:
+- Whether any role (emergency multisig, security council, guardian) can bypass the timelock
+- What powers the bypass role has (pause-only = LOW risk; full upgrade/drain = HIGH risk)
+- Whether the bypass role is itself behind a multisig with a reasonable threshold
+
+### 6. Historical Attack Pattern Matching
 
 Cross-reference findings against three major exploit categories:
 
@@ -61,7 +70,7 @@ Cross-reference findings against three major exploit categories:
 
 Each pattern has a checklist of specific indicators. Matching 3+ indicators in any category triggers an explicit warning.
 
-### 6. Information Gap Reporting
+### 7. Information Gap Reporting
 
 What you **cannot** find is often more important than what you can. The audit explicitly lists unanswered questions, because:
 - Closed-source contracts cannot be verified

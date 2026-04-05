@@ -169,6 +169,44 @@ summarize_token() {
     echo "========================================="
 }
 
+# Validation helpers
+validate_chain_id() {
+    local cid="$1"
+    if [[ ! "$cid" =~ ^[0-9]+$ ]]; then
+        echo "Error: chain_id must be numeric (got: $cid)"
+        echo "Common chain IDs: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 8453=Base"
+        exit 1
+    fi
+}
+
+validate_evm_address() {
+    local addr="$1"
+    if [[ ! "$addr" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
+        echo "Warning: '$addr' does not look like a valid EVM address (expected 0x + 40 hex chars)"
+        echo "Proceeding anyway..."
+    fi
+}
+
+# Fetch with error handling (retry once on failure)
+goplus_fetch() {
+    local url="$1"
+    local response
+    response=$(curl -s --max-time 15 "$url")
+    local exit_code=$?
+    if [ $exit_code -ne 0 ] || [ -z "$response" ]; then
+        echo "First request failed (exit=$exit_code), retrying in 5s..." >&2
+        sleep 5
+        response=$(curl -s --max-time 15 "$url")
+        exit_code=$?
+        if [ $exit_code -ne 0 ] || [ -z "$response" ]; then
+            echo "Error: GoPlus API unavailable after retry (exit=$exit_code)" >&2
+            echo '{"error": "API unavailable"}'
+            return 1
+        fi
+    fi
+    echo "$response"
+}
+
 cmd="${1:-}"
 [ -z "$cmd" ] && usage
 
@@ -177,10 +215,12 @@ case "$cmd" in
         [ $# -lt 3 ] && usage
         chain_id="$2"
         address="$3"
+        validate_chain_id "$chain_id"
+        validate_evm_address "$address"
         echo "Querying GoPlus Token Security API..."
         echo "Chain: $chain_id | Address: $address"
         echo ""
-        response=$(curl -s "${GOPLUS_BASE}/token_security/${chain_id}?contract_addresses=${address}")
+        response=$(goplus_fetch "${GOPLUS_BASE}/token_security/${chain_id}?contract_addresses=${address}")
         echo "$response" | fmt
         summarize_token "$response"
         ;;
@@ -188,28 +228,34 @@ case "$cmd" in
         [ $# -lt 2 ] && usage
         addr="$2"
         chain="${3:-1}"
+        validate_evm_address "$addr"
+        validate_chain_id "$chain"
         echo "Querying GoPlus Address Security API..."
         echo "Address: $addr | Chain: $chain"
         echo ""
-        curl -s "${GOPLUS_BASE}/address_security/${addr}?chain_id=${chain}" | fmt
+        goplus_fetch "${GOPLUS_BASE}/address_security/${addr}?chain_id=${chain}" | fmt
         ;;
     nft)
         [ $# -lt 3 ] && usage
         chain_id="$2"
         address="$3"
+        validate_chain_id "$chain_id"
+        validate_evm_address "$address"
         echo "Querying GoPlus NFT Security API..."
         echo "Chain: $chain_id | Address: $address"
         echo ""
-        curl -s "${GOPLUS_BASE}/nft_security/${chain_id}?contract_addresses=${address}" | fmt
+        goplus_fetch "${GOPLUS_BASE}/nft_security/${chain_id}?contract_addresses=${address}" | fmt
         ;;
     approval)
         [ $# -lt 3 ] && usage
         chain_id="$2"
         address="$3"
+        validate_chain_id "$chain_id"
+        validate_evm_address "$address"
         echo "Querying GoPlus Approval Security API..."
         echo "Chain: $chain_id | Address: $address"
         echo ""
-        curl -s "${GOPLUS_BASE}/approval_security/${chain_id}?contract_addresses=${address}" | fmt
+        goplus_fetch "${GOPLUS_BASE}/approval_security/${chain_id}?contract_addresses=${address}" | fmt
         ;;
     dapp)
         [ $# -lt 2 ] && usage
@@ -217,7 +263,7 @@ case "$cmd" in
         echo "Querying GoPlus dApp Security API..."
         echo "URL: $url"
         echo ""
-        curl -s "${GOPLUS_BASE}/dapp_security?url=${url}" | fmt
+        goplus_fetch "${GOPLUS_BASE}/dapp_security?url=${url}" | fmt
         ;;
     *)
         usage

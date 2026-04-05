@@ -27,8 +27,6 @@ Given a protocol name, the skill:
 
 Validated against three protocols:
 
-| Protocol | Type | TVL | Risk Rating | Audit Date | Key Finding |
-|----------|------|-----|-------------|------------|-------------|
 | Protocol | Type | TVL | Risk Rating | GoPlus | Audit Date | Key Finding |
 |----------|------|-----|-------------|--------|------------|-------------|
 | [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | N/A (Solana) | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
@@ -41,7 +39,19 @@ The skill correctly distinguished high-risk from low-risk protocols and identifi
 
 ## Installation
 
-### As a Claude Code Skill
+### Via [skills.sh](https://skills.sh/truenorth-lj/crypto-project-security-skill/defi-security-audit) (Vercel)
+
+```bash
+npx skills add truenorth-lj/crypto-project-security-skill
+```
+
+### Via [ClawHub](https://clawhub.ai/truenorth-lj/crypto-project-security-skill) (OpenClaw)
+
+```bash
+clawhub install truenorth-lj/crypto-project-security-skill
+```
+
+### Manual
 
 Copy the `SKILL.md` file into your project's Claude Code skills directory:
 

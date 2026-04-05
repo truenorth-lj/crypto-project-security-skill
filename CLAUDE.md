@@ -24,9 +24,16 @@ This repo contains a Claude Code skill (`SKILL.md`) for performing comprehensive
 
 ## Skill Installation
 
-To use this skill in any project, copy `SKILL.md` into the target project:
+Install via skills.sh, ClawHub, or manually:
 
 ```bash
+# Via skills.sh (Vercel)
+npx skills add truenorth-lj/crypto-project-security-skill
+
+# Via ClawHub (OpenClaw)
+clawhub install truenorth-lj/crypto-project-security-skill
+
+# Manual
 mkdir -p .claude/skills/defi-security-audit
 cp SKILL.md .claude/skills/defi-security-audit/SKILL.md
 ```
@@ -52,9 +59,12 @@ cp SKILL.md .claude/skills/defi-security-audit/SKILL.md
 
 When adding new audit reports to `docs/examples/`:
 
-1. Follow the report template defined in `SKILL.md` (Step 8)
+1. Follow the report template defined in `SKILL.md` (Step 9)
 2. Use kebab-case filename: `{protocol-name}-{context}.md`
-3. Update the test results table in `README.md` with a link to the new report
+3. **Always update `README.md`** after adding a new report:
+   - Add a row to the "Test Results" table with: protocol name (linked to report), type, TVL, risk rating, GoPlus result, audit date, and key finding
+   - Update the repo structure tree in CLAUDE.md if needed
+   - Update the "Validated against N protocols" count
 4. Include all sections: Overview, Quantitative Metrics, Risk Summary, Detailed Findings, Hack Pattern Check, Information Gaps
 
 ## Style

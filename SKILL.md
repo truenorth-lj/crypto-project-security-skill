@@ -1,6 +1,14 @@
 ---
 name: defi-security-audit
 description: Analyze a DeFi protocol for vulnerabilities, mechanism safety, and risk factors. Use when the user wants to audit a DeFi project, check protocol security, or assess risk. Trigger words include "audit defi", "analyze protocol", "check security", "defi risk", "protocol vulnerability", "is it safe".
+version: 1.1.0
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
+metadata:
+  openclaw:
+    requires:
+      bins:
+        - curl
+        - jq
 ---
 
 # DeFi Security Audit Skill
@@ -46,6 +54,11 @@ Before deep analysis, run a quick triage to decide audit priority:
 
    **Chain IDs**: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 43114=Avalanche, 8453=Base, 324=zkSync. Solana is NOT supported by GoPlus token security API.
 
+   **Error handling**: GoPlus is a free API with undocumented rate limits. If the API returns an error, empty result, or times out:
+   - Record "GoPlus: UNAVAILABLE" in the report rather than omitting the section
+   - Wait 5 seconds and retry once
+   - If still failing, proceed with the audit without GoPlus data and note the gap in Information Gaps
+
 3. **GoPlus address check** (optional): If specific admin/deployer addresses are known, check for malicious history:
    ```bash
    curl -s "https://api.gopluslabs.io/api/v1/address_security/<address>?chain_id=<chain_id>"
@@ -61,21 +74,47 @@ Before deep analysis, run a quick triage to decide audit priority:
    - GoPlus: honeypot detected or creator has honeypot history
    - GoPlus: hidden owner or owner can change balances
    - GoPlus: admin/deployer address flagged as malicious
-5. **Quantitative baselines** (compute these for the report):
+5. **Quick Triage Score** (compute for the report, 0-100):
+   ```
+   Start at 100, subtract:
+   - 25 per CRITICAL red flag (honeypot, TVL=0, hidden owner, owner changes balances)
+   - 15 per HIGH red flag (closed-source, no audits, anon team + no track record)
+   - 8 per MEDIUM red flag (proxy without timelock, mintable, age <6mo with high TVL)
+   - 5 per INFO concern (single oracle, no bug bounty, undisclosed config)
+   Floor at 0. Score meaning: 80-100 = LOW risk, 50-79 = MEDIUM, 20-49 = HIGH, 0-19 = CRITICAL
+   ```
+6. **Quantitative baselines** (compute these for the report):
    - `Insurance Fund / TVL ratio` (healthy: >5%, concerning: <1%)
-   - `Audit coverage score`: (number of audits) x (recency weight) -- audits >1 year old get 0.5 weight
+   - `Audit Coverage Score`:
+     ```
+     Sum across all known audits:
+       1.0 per audit less than 1 year old
+       0.5 per audit 1-2 years old
+       0.25 per audit older than 2 years
+     Risk thresholds: >= 3.0 = LOW | 1.5-2.99 = MEDIUM | < 1.5 = HIGH
+     ```
    - `Governance decentralization score`: timelock hours + multisig threshold ratio + signer doxxing
    - `TVL trend`: 7d, 30d, 90d change percentages
    - `GoPlus risk flags`: count of HIGH + MEDIUM flags from token security check
 
 ### Step 1: Gather Protocol Information
 
-Use web search to collect:
+Use web search to collect the following. Run these specific queries (replace `{protocol}` with the protocol name):
+
 1. **Basic info**: chain, TVL, token, launch date, team (doxxed or anon)
+   - Search: `"{protocol}" DeFi protocol overview`
 2. **Protocol type**: lending, DEX, perps, yield, bridge, etc.
 3. **Architecture**: key smart contracts, upgrade mechanisms
-4. **Recent news**: any past exploits, incidents, or security concerns
-5. **Peer comparison**: identify 2-3 comparable protocols for benchmarking (same chain + category)
+   - Search: `"{protocol}" docs architecture OR contracts OR "smart contract"`
+4. **Security incidents and audits**:
+   - Search: `"{protocol}" exploit OR hack OR vulnerability OR "security incident"`
+   - Search: `"{protocol}" site:rekt.news`
+   - Search: `"{protocol}" audit report site:github.com`
+5. **Governance and admin configuration**:
+   - Search: `"{protocol}" multisig OR timelock OR governance OR "admin key"`
+6. **Bug bounty**:
+   - Search: `"{protocol}" site:immunefi.com`
+7. **Peer comparison**: identify 2-3 comparable protocols for benchmarking (same chain + category)
 
 Also check DeFiLlama for current TVL and TVL trend data.
 
@@ -93,6 +132,13 @@ Do NOT use compound ratings like "LOW-MEDIUM" -- pick exactly one level per cate
 - Can admin modify withdrawal limits or risk parameters?
 - Are multisig signers doxxed or anonymous?
 
+**Timelock bypass detection** (critical -- a timelock is only as strong as its bypass):
+- Does any role (emergency multisig, security council, guardian) bypass the timelock?
+- What powers does the bypass role have? (pause-only is LOW risk; full upgrade/drain is HIGH)
+- Is the bypass role itself behind a multisig? What threshold?
+- Are there on-chain constraints on what the bypass role can do, or is it trust-based?
+- Example: "48h timelock with a 3/5 emergency multisig that can only pause" = LOW risk. "48h timelock with a 2/3 security council that can upgrade" = HIGH risk.
+
 #### 2.2 Upgrade Mechanism
 - Are contracts upgradeable (proxy pattern)?
 - Who controls upgrades?
@@ -104,6 +150,13 @@ Do NOT use compound ratings like "LOW-MEDIUM" -- pick exactly one level per cate
 - Minimum voting period?
 - Quorum requirements?
 - Can governance be bypassed via Security Council or emergency multisig?
+
+#### 2.4 Token Concentration & Whale Risk (if on-chain governance)
+- What percentage of voting supply do the top 5 holders control?
+- Are top holders contracts (treasury, staking, vesting) or EOAs?
+- Can a single whale meet quorum or pass a proposal unilaterally?
+- Is there vote delegation, and how concentrated is delegated power?
+- Cross-reference GoPlus `holders` data if available from Step 0
 
 ### Step 3: Oracle & Price Feed Analysis
 
@@ -166,28 +219,61 @@ Do NOT use compound ratings like "LOW-MEDIUM" -- pick exactly one level per cate
 - Any past exploits or near-misses?
 - Open source code?
 
-### Step 6: Operational Security
+### Step 6: Cross-Chain & Bridge Risk
 
-#### 6.1 Team & Track Record
+Skip this step if the protocol operates on a single chain with no bridge dependencies.
+
+#### 6.1 Multi-Chain Deployment
+- How many chains is the protocol deployed on?
+- Does each chain deployment have its own admin multisig, or does one key control all?
+- Are risk parameters (collateral factors, rate limits) independently configured per chain?
+- Is there a canonical "home chain" for governance, with message relaying to others?
+
+#### 6.2 Bridge Dependencies
+- Does the protocol depend on a bridge for cross-chain messaging or asset transfers?
+- Is the bridge a canonical chain bridge (e.g., Arbitrum native) or third-party (e.g., LayerZero, Wormhole)?
+- What is the bridge's validator/relayer set? (centralized vs. decentralized)
+- What happens to the protocol if the bridge goes down or is compromised?
+
+#### 6.3 Cross-Chain Message Security
+- How are cross-chain governance actions validated?
+- Is there a timelock on cross-chain messages?
+- Can a compromised bridge forge governance actions on a remote chain?
+- Has the bridge been audited independently of the protocol?
+
+### Step 7: Operational Security
+
+#### 7.1 Team & Track Record
 - Team doxxed or anonymous?
 - Previous projects?
 - Any past security incidents under their management?
 
-#### 6.2 Incident Response
+#### 7.2 Incident Response
 - Published incident response plan?
 - Emergency pause capability?
 - Communication channels for security alerts?
 
-#### 6.3 Dependencies
+#### 7.3 Dependencies
 - Key external dependencies (bridges, oracles, other protocols)
 - Composability risk (what breaks if a dependency fails?)
 
-### Step 7: On-Chain Verification (when possible)
+### Step 8: On-Chain Verification (when possible)
 
 For Solana protocols, attempt to verify key claims on-chain:
-- Check multisig configuration via Squads or similar (search for program authority)
+- Get the program's upgrade authority:
+  ```bash
+  solana program show <program_id> --url mainnet-beta
+  ```
+  The "Authority" field shows who can upgrade the program. If it's a Squads multisig, look it up at `https://v4.squads.so/` or search the Squads program for the vault address.
+- Verify multisig threshold and signers:
+  ```bash
+  # If using Squads v4, the multisig account data contains threshold and member list
+  # Search on Solana Explorer: https://explorer.solana.com/address/<authority_address>
+  ```
+- Check if the program is frozen (no upgrade authority):
+  If "Authority" is `None`, the program cannot be upgraded -- this eliminates admin key risk but also prevents bug fixes.
 - Verify timelock settings if contract is open source
-- Check recent admin transactions for unusual patterns
+- Check recent admin transactions for unusual patterns via Solana Explorer or SolanaFM
 
 For EVM protocols:
 - Check Etherscan/block explorer for proxy admin, timelock contracts
@@ -196,7 +282,7 @@ For EVM protocols:
 
 Mark any claim that could NOT be verified on-chain as "UNVERIFIED" in the report.
 
-### Step 8: Generate Risk Report
+### Step 9: Generate Risk Report
 
 Compile findings into a structured report:
 
@@ -248,12 +334,13 @@ Compile findings into a structured report:
 
 | Category | Risk Level | Key Concern | Verified? |
 |----------|-----------|-------------|-----------|
-| Governance & Admin | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
-| Oracle & Price Feeds | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
-| Economic Mechanism | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
-| Smart Contract | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
-| Token Contract (GoPlus) | {LOW/MED/HIGH/CRIT/N/A} | {one-line} | {Y/N/Partial} |
-| Operational Security | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
+| Governance & Admin | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Oracle & Price Feeds | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Economic Mechanism | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Smart Contract | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Token Contract (GoPlus) | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
+| Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
+| Operational Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
 | **Overall Risk** | **{level}** | **{summary}** | |
 
 ## Detailed Findings
@@ -270,7 +357,10 @@ Compile findings into a structured report:
 ### 4. Smart Contract Security
 {detailed analysis}
 
-### 5. Operational Security
+### 5. Cross-Chain & Bridge (if applicable)
+{detailed analysis -- omit section if single-chain with no bridge dependencies}
+
+### 6. Operational Security
 {detailed analysis}
 
 ## Critical Risks (if any)
@@ -322,7 +412,7 @@ It is NOT a formal smart contract audit. Always DYOR and consider
 professional auditing services for investment decisions.
 ```
 
-### Step 9: Present Results
+### Step 10: Present Results
 
 Output the complete report to the user. Highlight any CRITICAL or HIGH risk items prominently. If the protocol has characteristics similar to the Drift hack pattern (weak admin controls, no timelock, flexible oracle assignment), explicitly call this out.
 
