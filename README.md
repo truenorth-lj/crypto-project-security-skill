@@ -14,7 +14,7 @@ This skill automates that kind of pre-incident analysis.
 
 Given a protocol name, the skill:
 
-1. **Quick Triage** -- Pulls TVL data from DeFiLlama API, scans for immediate red flags (TVL collapse, no audits, closed-source code, anon team)
+1. **Quick Triage** -- Pulls TVL data from DeFiLlama API and token contract risk flags from GoPlus Security API, scans for immediate red flags (TVL collapse, no audits, honeypot, hidden owner, closed-source code, anon team)
 2. **Governance & Admin Analysis** -- Maps admin key powers, multisig config, timelock duration, upgrade mechanisms
 3. **Oracle & Price Feed Analysis** -- Checks oracle providers, fallback mechanisms, collateral listing process, manipulation resistance
 4. **Economic Mechanism Analysis** -- Evaluates liquidation design, insurance fund adequacy, withdrawal limits

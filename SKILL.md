@@ -24,17 +24,49 @@ Before deep analysis, run a quick triage to decide audit priority:
    - Current TVL and TVL history (sharp drops = red flag)
    - Number of audits listed
    - Chain(s)
-2. **Immediate red flags** (any = escalate to CRITICAL triage):
+2. **GoPlus token security check**: If the protocol has a governance/utility token on an EVM chain, run `./scripts/goplus-check.sh token <chain_id> <contract_address>` or call the API directly:
+   ```bash
+   curl -s "https://api.gopluslabs.io/api/v1/token_security/<chain_id>?contract_addresses=<address>"
+   ```
+   Extract these red flags from the response:
+   - `is_honeypot = 1` -- token is a honeypot (CRITICAL)
+   - `honeypot_with_same_creator = 1` -- creator has deployed honeypots (CRITICAL)
+   - `is_open_source = 0` -- contract not verified (HIGH)
+   - `hidden_owner = 1` -- hidden ownership mechanism (HIGH)
+   - `owner_change_balance = 1` -- owner can modify balances (HIGH)
+   - `selfdestruct = 1` -- contract can self-destruct (HIGH)
+   - `can_take_back_ownership = 1` -- can reclaim ownership after renouncing (HIGH)
+   - `is_proxy = 1` -- upgradeable proxy (MEDIUM, cross-reference with Step 2)
+   - `is_mintable = 1` -- unlimited minting possible (MEDIUM)
+   - `slippage_modifiable = 1` -- owner can change tax/slippage (MEDIUM)
+   - `transfer_pausable = 1` -- transfers can be paused (MEDIUM)
+   - `is_blacklisted = 1` -- has blacklist functionality (MEDIUM)
+
+   Also note: `buy_tax`, `sell_tax`, `holder_count`, `lp_holders` (lock status), and `trust_list` status.
+
+   **Chain IDs**: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 43114=Avalanche, 8453=Base, 324=zkSync. Solana is NOT supported by GoPlus token security API.
+
+3. **GoPlus address check** (optional): If specific admin/deployer addresses are known, check for malicious history:
+   ```bash
+   curl -s "https://api.gopluslabs.io/api/v1/address_security/<address>?chain_id=<chain_id>"
+   ```
+   Flags: `cybercrime`, `money_laundering`, `phishing_activities`, `stealing_attack`, `sanctioned`, `honeypot_related_address`, `malicious_mining_activities`, `number_of_malicious_contracts_created`.
+
+4. **Immediate red flags** (any = escalate to CRITICAL triage):
    - TVL = $0 or dropped >50% in 30 days
    - No audits listed on DeFiLlama
    - Protocol age < 6 months with TVL > $50M
    - Anonymous team with no prior track record
    - Closed-source contracts
-3. **Quantitative baselines** (compute these for the report):
+   - GoPlus: honeypot detected or creator has honeypot history
+   - GoPlus: hidden owner or owner can change balances
+   - GoPlus: admin/deployer address flagged as malicious
+5. **Quantitative baselines** (compute these for the report):
    - `Insurance Fund / TVL ratio` (healthy: >5%, concerning: <1%)
    - `Audit coverage score`: (number of audits) x (recency weight) -- audits >1 year old get 0.5 weight
    - `Governance decentralization score`: timelock hours + multisig threshold ratio + signer doxxing
    - `TVL trend`: 7d, 30d, 90d change percentages
+   - `GoPlus risk flags`: count of HIGH + MEDIUM flags from token security check
 
 ### Step 1: Gather Protocol Information
 
@@ -49,7 +81,8 @@ Also check DeFiLlama for current TVL and TVL trend data.
 
 ### Step 2: Governance & Admin Key Analysis
 
-Evaluate the following and assign risk ratings (LOW / MEDIUM / HIGH / CRITICAL):
+Evaluate the following and assign risk ratings (LOW / MEDIUM / HIGH / CRITICAL).
+Do NOT use compound ratings like "LOW-MEDIUM" -- pick exactly one level per category.
 
 #### 2.1 Admin Key Surface Area
 - What can the admin key do? (pause, upgrade, change params, drain)
@@ -191,6 +224,25 @@ Compile findings into a structured report:
 | Governance Decentralization | {x} | {peer avg} | {rating} |
 | Timelock Duration | {x}h | {peer avg}h | {rating} |
 | Multisig Threshold | {m/n} | {peer avg} | {rating} |
+| GoPlus Risk Flags | {high_count} HIGH / {med_count} MED | -- | {rating} |
+
+## GoPlus Token Security (if EVM token available)
+| Check | Result | Risk |
+|-------|--------|------|
+| Honeypot | {is_honeypot} | |
+| Open Source | {is_open_source} | |
+| Proxy | {is_proxy} | |
+| Mintable | {is_mintable} | |
+| Owner Can Change Balance | {owner_change_balance} | |
+| Hidden Owner | {hidden_owner} | |
+| Selfdestruct | {selfdestruct} | |
+| Transfer Pausable | {transfer_pausable} | |
+| Blacklist | {is_blacklisted} | |
+| Slippage Modifiable | {slippage_modifiable} | |
+| Buy Tax / Sell Tax | {buy_tax}% / {sell_tax}% | |
+| Holders | {holder_count} | |
+| Trust List | {trust_list} | |
+| Creator Honeypot History | {honeypot_with_same_creator} | |
 
 ## Risk Summary
 
@@ -288,12 +340,31 @@ Output the complete report to the user. Highlight any CRITICAL or HIGH risk item
 - **Information gaps go in the report** - what you CANNOT find is often more important than what you can
 - This is a research tool, not financial advice - always include the disclaimer
 
-## DeFiLlama API Quick Reference
+## API Quick Reference
 
-Useful endpoints for data gathering:
+### DeFiLlama
+
 - Protocol info: `https://api.llama.fi/protocol/{slug}`
 - All protocols: `https://api.llama.fi/protocols`
 - TVL history: included in protocol endpoint response
 - Yields: `https://yields.llama.fi/pools`
+
+### GoPlus Security (free, no API key required)
+
+Base URL: `https://api.gopluslabs.io/api/v1`
+
+| Endpoint | Description |
+|----------|-------------|
+| `token_security/{chain_id}?contract_addresses={addr}` | Token risk profile (honeypot, owner powers, tax, holders, LP) |
+| `address_security/{addr}?chain_id={chain_id}` | Malicious address flags (phishing, sanctions, cybercrime) |
+| `approval_security/{chain_id}?contract_addresses={addr}` | Contract approval risk (privilege_withdraw, approval_abuse) |
+| `nft_security/{chain_id}?contract_addresses={addr}` | NFT-specific risks (privileged mint/burn, copycat detection) |
+| `dapp_security?url={url}` | dApp audit status and contract security |
+| `rugpull_detecting/{chain_id}?contract_addresses={addr}` | Rug-pull risk detection (Beta) |
+| `supported_chains` | List of supported chains and chain IDs |
+
+**Chain IDs**: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 43114=Avalanche, 8453=Base, 324=zkSync, 59144=Linea, 534352=Scroll.
+
+**Helper script**: `./scripts/goplus-check.sh` wraps these endpoints with formatted output. See `./scripts/goplus-check.sh --help` for usage.
 
 Use `curl` via bash to fetch these programmatically when browser data is hard to extract.

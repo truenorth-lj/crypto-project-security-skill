@@ -30,7 +30,7 @@
 |----------|-----------|-------------|-----------|
 | Governance & Admin | **LOW** | DAO governance + 6/10 Guardian + dual timelocks | Y |
 | Oracle & Price Feeds | **LOW** | Chainlink primary with SVR fallback | Y |
-| Economic Mechanism | **LOW-MEDIUM** | Robust liquidation; Umbrella upgrade in transition | Partial |
+| Economic Mechanism | **MEDIUM** | Robust liquidation; Umbrella upgrade in transition | Partial |
 | Smart Contract | **LOW** | 6+ audit firms, formal verification, $1M bounty | Y |
 | Operational Security | **LOW** | Doxxed founder, strong incident response history | Y |
 | **Overall Risk** | **LOW** | **Gold standard for DeFi lending security** | |
@@ -51,7 +51,7 @@
 - Governance can change oracle sources but subject to timelock
 - No known oracle manipulation exploit in production
 
-### 3. Economic Mechanism -- LOW-MEDIUM
+### 3. Economic Mechanism -- MEDIUM
 
 - Standard health-factor liquidation with flash loan support
 - Safety Module: stkAAVE/stkABPT (slashing currently disabled during Umbrella transition)
