@@ -29,9 +29,9 @@ Validated against three protocols:
 
 | Protocol | Type | TVL | Risk Rating | Key Finding |
 |----------|------|-----|-------------|-------------|
-| **Drift Protocol** (pre-hack) | Top | $550M | **CRITICAL** | Successfully identified all 3 attack vectors before the hack |
-| **Aave** | Top | $23.6B | **LOW** | Confirmed robust DAO governance + dual timelock + 6yr track record |
-| **Zeta Markets** | Tail | $0 | **HIGH** | Flagged no audits, closed-source, undisclosed multisig config |
+| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | Successfully identified all 3 attack vectors before the hack |
+| [**Aave**](docs/examples/aave-top-protocol.md) | Top | $23.6B | **LOW** | Confirmed robust DAO governance + dual timelock + 6yr track record |
+| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Tail | $0 | **HIGH** | Flagged no audits, closed-source, undisclosed multisig config |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
 
