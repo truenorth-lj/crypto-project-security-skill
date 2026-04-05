@@ -14,6 +14,7 @@
 
 ## Quick Triage Score: 18/100
 - Red flags found: 4 (TVL = $0, no audits on DeFiLlama, closed-source core contracts, undisclosed multisig config)
+- GoPlus token security: N/A (ZEX is a Solana SPL token; GoPlus token security API does not support Solana)
 
 ## Risk Summary
 
@@ -23,6 +24,7 @@
 | Oracle & Price Feeds | MEDIUM | Pyth + Chainlink fallback, but oracle override capability unknown | N |
 | Economic Mechanism | MEDIUM | Reasonable insurance fund design, USDC-only collateral | Partial |
 | Smart Contract | **HIGH** | Zero audits listed, closed-source core program | N |
+| Token Contract (GoPlus) | N/A | Solana SPL token; GoPlus does not support Solana | -- |
 | Operational Security | **HIGH** | Protocol discontinued, team migrated to new project | Partial |
 | **Overall Risk** | **HIGH** | **Defunct protocol with significant transparency gaps** | |
 
@@ -87,6 +89,12 @@
 - Timelock configuration -- no evidence found, likely absent
 - Full admin key capability scope -- closed-source prevents verification
 - Insurance fund actual balance vs TVL at peak -- UNKNOWN
+
+## GoPlus Token Security
+
+**Not applicable.** ZEX (mint: `ZEXy1pqteRu3n13kdyh4LwPQknkFk3GzmMYMuNadWPo`) is a Solana SPL token. GoPlus token security API currently supports EVM chains only. The token is now migrating 1:1 to BULLET on a new network, further limiting automated analysis.
+
+For a defunct Solana protocol with closed-source contracts, GoPlus would provide limited value even if supported -- the key risks (unknown multisig threshold, absent timelock, closed-source code) are governance and transparency issues that require manual investigation.
 
 ## Key Takeaway
 

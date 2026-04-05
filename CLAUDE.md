@@ -12,6 +12,8 @@ This repo contains a Claude Code skill (`SKILL.md`) for performing comprehensive
 ├── README.md              # Public-facing documentation
 ├── SKILL.md               # The Claude Code skill definition (copy to .claude/skills/)
 ├── LICENSE                # MIT
+├── scripts/
+│   └── goplus-check.sh    # GoPlus Security API helper script (token, address, dApp checks)
 └── docs/
     ├── methodology.md     # Audit framework design principles and methodology
     └── examples/          # Example audit reports from validation testing
@@ -44,6 +46,7 @@ cp SKILL.md .claude/skills/defi-security-audit/SKILL.md
 - **Attack pattern matching**: Cross-references findings against three exploit categories (Drift-type, Euler/Mango-type, Ronin/Harmony-type) with specific indicator checklists.
 - **Information gap reporting**: Explicitly lists what could NOT be determined -- absence of public information is itself a risk signal.
 - **DeFiLlama API integration**: Uses `curl` against DeFiLlama endpoints for TVL data, audit counts, and protocol metadata.
+- **GoPlus Security API integration**: Automated token-level contract scanning (honeypot detection, owner privilege analysis, trading restrictions, holder concentration, malicious address checks) via free API. Complements the governance-first approach by covering contract-level risks that manual research may miss. Helper script at `scripts/goplus-check.sh`.
 
 ## Adding New Example Reports
 

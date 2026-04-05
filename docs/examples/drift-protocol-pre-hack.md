@@ -14,6 +14,7 @@
 
 ## Quick Triage Score: 35/100
 - Red flags found: 3 (zero timelock, low multisig threshold, admin can list arbitrary collateral)
+- GoPlus token security: N/A (DRIFT is a Solana SPL token; GoPlus token security API does not support Solana)
 
 ## Risk Summary
 
@@ -22,6 +23,7 @@
 | Governance & Admin | **CRITICAL** | 2/5 multisig, 0s timelock, single authority controls all vaults | Y |
 | Oracle & Price Feeds | **CRITICAL** | Admin can specify arbitrary oracle sources; no validation on collateral listing | Y |
 | Smart Contract | MEDIUM | Audited by Trail of Bits & Neodyme; $1M bug bounty; open source | Y |
+| Token Contract (GoPlus) | N/A | Solana SPL token; GoPlus does not support Solana | -- |
 | Economic Mechanism | **HIGH** | Withdrawal limits disableable by admin; insurance fund insufficient | Partial |
 | Operational Security | **HIGH** | Durable nonce pre-signing risk; anonymous signers | Partial |
 | **Overall Risk** | **CRITICAL** | **Governance architecture allows single-point-of-failure fund drain** | |
@@ -79,6 +81,12 @@ The Solana durable nonce mechanism allowed pre-signed transactions to remain val
 - [x] Social engineering surface area (anon multisig signers)
 
 **7/7 flags matched.** This protocol would have been flagged as CRITICAL risk.
+
+## GoPlus Token Security
+
+**Not applicable.** DRIFT (mint: `DRiFtupJYLTosbwoN8koMbEYSx54aFAVLddWsbksjwg7`) is a Solana SPL token. GoPlus token security API currently supports EVM chains only (Ethereum, BSC, Polygon, Arbitrum, etc.) and does not cover Solana.
+
+Even if GoPlus data were available, the Drift hack exploited governance architecture (admin key powers, multisig threshold, timelock absence), not token contract properties. GoPlus checks for honeypots, hidden owners, and trading restrictions -- none of which would have surfaced the actual attack vectors. This case illustrates why GoPlus and protocol-level governance analysis are complementary, not substitutes.
 
 ## Conclusion
 

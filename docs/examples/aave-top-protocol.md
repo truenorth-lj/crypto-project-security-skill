@@ -13,6 +13,7 @@
 
 ## Quick Triage Score: 92/100
 - Red flags found: 0
+- GoPlus token security: 0 HIGH / 1 MEDIUM flag (proxy contract only)
 
 ## Quantitative Metrics
 
@@ -23,6 +24,29 @@
 | Governance Decentralization | DAO + Guardian | Multisig avg | LOW risk |
 | Timelock Duration | 24h / 168h | 24-48h avg | LOW risk |
 | Multisig Threshold | 6/10 (Guardian) | 3/5 avg | LOW risk |
+| GoPlus Risk Flags | 0 HIGH / 1 MED | -- | LOW risk |
+
+## GoPlus Token Security (AAVE on Ethereum)
+
+| Check | Result | Risk |
+|-------|--------|------|
+| Honeypot | No | -- |
+| Open Source | Yes | -- |
+| Proxy | Yes (upgradeable) | MEDIUM |
+| Mintable | No | -- |
+| Owner Can Change Balance | No | -- |
+| Hidden Owner | No | -- |
+| Selfdestruct | No | -- |
+| Transfer Pausable | No | -- |
+| Blacklist | No | -- |
+| Slippage Modifiable | No | -- |
+| Buy Tax / Sell Tax | 0% / 0% | -- |
+| Holders | 193,226 | -- |
+| Trust List | No | -- |
+| Creator Honeypot History | No | -- |
+| CEX Listed | Binance, Coinbase | -- |
+
+GoPlus assessment: **LOW RISK**. The only flag is the proxy (upgradeable) pattern, which is expected -- upgrades are governed by the Aave DAO with dual timelocks (see Governance section). No honeypot, no hidden owner, no tax, no trading restrictions.
 
 ## Risk Summary
 
@@ -32,6 +56,7 @@
 | Oracle & Price Feeds | **LOW** | Chainlink primary with SVR fallback | Y |
 | Economic Mechanism | **MEDIUM** | Robust liquidation; Umbrella upgrade in transition | Partial |
 | Smart Contract | **LOW** | 6+ audit firms, formal verification, $1M bounty | Y |
+| Token Contract (GoPlus) | **LOW** | Proxy only (DAO-governed); no honeypot, no hidden owner, no tax | Y |
 | Operational Security | **LOW** | Doxxed founder, strong incident response history | Y |
 | **Overall Risk** | **LOW** | **Gold standard for DeFi lending security** | |
 

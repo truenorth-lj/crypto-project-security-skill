@@ -29,11 +29,15 @@ Validated against three protocols:
 
 | Protocol | Type | TVL | Risk Rating | Audit Date | Key Finding |
 |----------|------|-----|-------------|------------|-------------|
-| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
-| [**Aave**](docs/examples/aave-top-protocol.md) | Top | $23.6B | **LOW** | 2026-04-05 | Confirmed robust DAO governance + dual timelock + 6yr track record |
-| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Tail | $0 | **HIGH** | 2026-04-05 | Flagged no audits, closed-source, undisclosed multisig config |
+| Protocol | Type | TVL | Risk Rating | GoPlus | Audit Date | Key Finding |
+|----------|------|-----|-------------|--------|------------|-------------|
+| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | N/A (Solana) | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
+| [**Aave**](docs/examples/aave-top-protocol.md) | Top | $23.6B | **LOW** | LOW (0 HIGH / 1 MED) | 2026-04-05 | Confirmed robust DAO governance + dual timelock + 6yr track record |
+| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Tail | $0 | **HIGH** | N/A (Solana) | 2026-04-05 | Flagged no audits, closed-source, undisclosed multisig config |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
+
+**GoPlus integration note:** Drift and Zeta are Solana-native protocols; GoPlus token security API supports EVM chains only. For Aave (EVM), GoPlus confirmed the token contract is clean -- the only flag is the proxy pattern, which is expected for a DAO-governed upgradeable protocol.
 
 ## Installation
 
@@ -89,6 +93,28 @@ The skill computes comparable metrics across protocols:
 | Multisig Threshold | >3/5 | 2/5 | 1/N or no multisig |
 | Audit Coverage | Multiple recent | 1 old audit | None |
 
+## This Skill vs. GoPlus Security
+
+This skill integrates GoPlus Security API data, but the two serve fundamentally different purposes:
+
+| Dimension | This Skill | GoPlus Security |
+|-----------|-----------|-----------------|
+| **Scope** | Full protocol architecture | Individual token/contract |
+| **Method** | Research-driven manual analysis + API data | Automated static + dynamic analysis |
+| **Speed** | Minutes per audit | Sub-second API response |
+| **Governance analysis** | Core focus (multisig, timelock, admin powers) | Not covered |
+| **Oracle risk** | Evaluated (dependency, manipulation resistance) | Not covered |
+| **Economic modeling** | Insurance/TVL, liquidation design, bad debt | Not covered |
+| **Honeypot detection** | Not covered | Strong (simulation-based) |
+| **Malicious address flags** | Not covered | 20+ flags (phishing, sanctions, etc.) |
+| **Trading restrictions** | Not covered | Buy/sell tax, pause, blacklist |
+| **Chain support** | Any chain (manual research) | 40+ EVM chains (no Solana) |
+| **Cost** | Free (Claude Code + public APIs) | Free (no API key required) |
+| **Would catch Drift hack** | Yes (designed for this) | No (governance, not token-level) |
+| **Would catch honeypot scam** | No (not designed for this) | Yes (designed for this) |
+
+**Key insight:** GoPlus answers "is this token contract safe to interact with?" -- the kind of check a wallet or DEX needs to do millions of times per day. This skill answers "is this protocol's overall design sound?" -- the kind of analysis an investor or researcher does before committing capital. They are complementary: GoPlus catches contract-level scams fast; this skill catches systemic governance and economic risks that automated tools miss.
+
 ## Limitations
 
 - This is a **research tool**, not a formal smart contract audit
@@ -97,15 +123,54 @@ The skill computes comparable metrics across protocols:
 - On-chain verification depends on block explorer availability and contract transparency
 - DeFi protocols change frequently -- audit results have a short shelf life
 
-## DeFiLlama API Reference
+## Data Sources
 
-The skill uses these endpoints for data gathering:
+### DeFiLlama API
+
+TVL, audit counts, and protocol metadata:
 
 ```
 Protocol info:  https://api.llama.fi/protocol/{slug}
 All protocols:  https://api.llama.fi/protocols
 Yields:         https://yields.llama.fi/pools
 ```
+
+### GoPlus Security API
+
+Automated token and address security scanning across 40+ EVM chains. Free, no API key required.
+
+```
+Base URL:       https://api.gopluslabs.io/api/v1
+Token check:    /token_security/{chain_id}?contract_addresses={addr}
+Address check:  /address_security/{addr}?chain_id={chain_id}
+Approval risk:  /approval_security/{chain_id}?contract_addresses={addr}
+dApp check:     /dapp_security?url={url}
+```
+
+GoPlus provides automated detection of:
+- **Honeypot tokens** -- simulates buy/sell to verify tokens can actually be sold
+- **Owner privilege abuse** -- hidden ownership, balance modification, self-destruct
+- **Trading restrictions** -- buy/sell tax, slippage modification, transfer pause, blacklist
+- **Holder concentration** -- top holder percentages, LP lock status
+- **Malicious addresses** -- phishing, sanctions, cybercrime, money laundering flags
+- **Creator history** -- whether the deployer has created honeypots before
+
+A helper script is included at `scripts/goplus-check.sh` for quick command-line lookups:
+
+```bash
+# Token security check (e.g., USDT on Ethereum)
+./scripts/goplus-check.sh token 1 0xdac17f958d2ee523a2206206994597c13d831ec7
+
+# Malicious address check
+./scripts/goplus-check.sh address 0x1234...abcd
+
+# dApp security check
+./scripts/goplus-check.sh dapp https://app.uniswap.org
+```
+
+**Chain IDs**: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 43114=Avalanche, 8453=Base
+
+> **Note**: GoPlus covers token-level contract risks (honeypot, owner powers, trading restrictions). It does NOT evaluate protocol-level governance architecture, oracle design, or economic mechanisms -- those remain covered by the skill's manual analysis workflow. The two approaches are complementary.
 
 ## License
 

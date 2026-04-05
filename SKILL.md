@@ -252,6 +252,7 @@ Compile findings into a structured report:
 | Oracle & Price Feeds | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
 | Economic Mechanism | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
 | Smart Contract | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
+| Token Contract (GoPlus) | {LOW/MED/HIGH/CRIT/N/A} | {one-line} | {Y/N/Partial} |
 | Operational Security | {LOW/MED/HIGH/CRIT} | {one-line} | {Y/N/Partial} |
 | **Overall Risk** | **{level}** | **{summary}** | |
 
