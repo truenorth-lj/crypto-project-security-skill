@@ -27,11 +27,11 @@ Given a protocol name, the skill:
 
 Validated against three protocols:
 
-| Protocol | Type | TVL | Risk Rating | Key Finding |
-|----------|------|-----|-------------|-------------|
-| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | Successfully identified all 3 attack vectors before the hack |
-| [**Aave**](docs/examples/aave-top-protocol.md) | Top | $23.6B | **LOW** | Confirmed robust DAO governance + dual timelock + 6yr track record |
-| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Tail | $0 | **HIGH** | Flagged no audits, closed-source, undisclosed multisig config |
+| Protocol | Type | TVL | Risk Rating | Audit Date | Key Finding |
+|----------|------|-----|-------------|------------|-------------|
+| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Top | $550M | **CRITICAL** | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
+| [**Aave**](docs/examples/aave-top-protocol.md) | Top | $23.6B | **LOW** | 2026-04-05 | Confirmed robust DAO governance + dual timelock + 6yr track record |
+| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Tail | $0 | **HIGH** | 2026-04-05 | Flagged no audits, closed-source, undisclosed multisig config |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
 
