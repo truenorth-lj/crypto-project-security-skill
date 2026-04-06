@@ -62,11 +62,15 @@ A timelock is only as strong as its bypass. The audit explicitly checks:
 
 ### 6. Historical Attack Pattern Matching
 
-Cross-reference findings against three major exploit categories:
+Cross-reference findings against eight major exploit categories:
 
 - **Drift-type**: Governance hijack + oracle manipulation + social engineering
 - **Euler/Mango-type**: Economic manipulation via low-liquidity collateral
 - **Ronin/Harmony-type**: Bridge validator compromise + key theft
+- **Beanstalk-type**: Flash loan governance attack (acquire voting power + propose + execute)
+- **Cream/bZx-type**: Reentrancy + flash loan (rebasing tokens, cross-contract callbacks)
+- **Curve-type**: Compiler or language-level bugs (Vyper reentrancy, compiler CVEs)
+- **UST/LUNA-type**: Algorithmic depeg cascade (reflexive collateral, redemption spirals)
 
 Each pattern has a checklist of specific indicators. Matching 3+ indicators in any category triggers an explicit warning.
 

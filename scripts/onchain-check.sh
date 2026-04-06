@@ -88,11 +88,20 @@ validate_evm_address() {
 # Compute EIP-55 checksummed address (Safe API requires it)
 checksum_address() {
     local addr="$1"
+    local raw="${addr#0x}"
+
+    # Strict validation: only hex chars allowed (prevents code injection into Python/Node)
+    if [[ ! "$raw" =~ ^[0-9a-fA-F]{40}$ ]]; then
+        echo "Error: invalid address for checksum: '$addr'" >&2
+        echo "$addr"
+        return 1
+    fi
+
     # EIP-55 uses Keccak-256 (NOT NIST SHA3-256)
     if command -v python3 &>/dev/null; then
         python3 -c "
-import sys
-addr = '${addr#0x}'.lower()
+import sys, os
+addr = sys.argv[1].lower()
 try:
     from web3 import Web3
     print(Web3.to_checksum_address('0x' + addr))
@@ -107,7 +116,6 @@ except ImportError:
         import _pysha3 as sha3
         h = sha3.keccak_256(addr.encode()).hexdigest()
     except ImportError:
-        # Fallback: no Keccak available, return as-is
         print('0x' + addr)
         sys.exit(0)
 result = '0x'
@@ -119,21 +127,17 @@ for i, c in enumerate(addr):
     else:
         result += c.lower()
 print(result)
-" 2>/dev/null
+" "$raw" 2>/dev/null
     elif command -v node &>/dev/null; then
         node -e "
-const { createHash } = require('crypto');
-const addr = '${addr#0x}'.toLowerCase();
-// Node's 'sha3-256' is actually Keccak-256 in older versions
-// Use ethers or manual approach
+const addr = process.argv[1].toLowerCase();
 try {
     const { getAddress } = require('ethers');
     console.log(getAddress('0x' + addr));
 } catch {
-    // Fallback: return as-is
     console.log('0x' + addr);
 }
-" 2>/dev/null
+" "$raw" 2>/dev/null
     else
         echo "$addr"
     fi
@@ -363,11 +367,40 @@ cmd_etherscan() {
         api_key="${ETHERSCAN_API_KEY:-}"
     fi
 
+    # Try loading from .env file if still missing
     if [ -z "$api_key" ]; then
-        echo "Warning: No API key provided. Set ETHERSCAN_API_KEY or pass as 3rd argument." >&2
-        echo "Etherscan free tier: register at etherscan.io for a free key (5 calls/sec)." >&2
+        local env_file
+        for env_file in ".env" "../.env" "${BASH_SOURCE[0]%/*}/../.env"; do
+            if [ -f "$env_file" ]; then
+                local loaded
+                loaded=$(grep -E '^ETHERSCAN_API_KEY=' "$env_file" 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"'"'" )
+                if [ -n "$loaded" ]; then
+                    api_key="$loaded"
+                    break
+                fi
+            fi
+        done
+    fi
+
+    if [ -z "$api_key" ]; then
+        echo "=========================================" >&2
+        echo " ERROR: Etherscan API key required" >&2
+        echo "=========================================" >&2
+        echo "" >&2
+        echo "Contract verification and proxy detection require an Etherscan API key." >&2
+        echo "This is a FREE key (5 calls/sec). Without it, a critical verification" >&2
+        echo "step will be skipped entirely." >&2
+        echo "" >&2
+        echo "Setup (choose one):" >&2
+        echo "  1. Add to .env file:   echo 'ETHERSCAN_API_KEY=your_key' >> .env" >&2
+        echo "  2. Export in shell:     export ETHERSCAN_API_KEY=your_key" >&2
+        echo "  3. Pass as argument:    $0 etherscan <addr> <chain_id> <api_key>" >&2
+        echo "" >&2
+        echo "Get a free key at: https://etherscan.io/myapikey" >&2
+        echo "See .env.example for all configurable keys." >&2
+        echo "=========================================" >&2
         echo ""
-        echo "RESULT: UNAVAILABLE (no API key)"
+        echo "RESULT: UNAVAILABLE (no API key -- see instructions above)"
         return 1
     fi
 

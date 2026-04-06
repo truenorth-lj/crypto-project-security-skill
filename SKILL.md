@@ -30,7 +30,14 @@ The user provides one or more of:
 
 Before deep analysis, run a quick triage to decide audit priority:
 
-1. **DeFiLlama data check**: Use `curl -s 'https://api.llama.fi/protocol/{slug}'` to get:
+1. **DeFiLlama data check**:
+   First, resolve the protocol name to the correct DeFiLlama slug (slugs are non-obvious, e.g., "maker" not "sky", "pancakeswap" not "pancake-swap"):
+   ```bash
+   # Fetch all protocols and fuzzy-match by name
+   curl -s 'https://api.llama.fi/protocols' | jq -r '.[] | select(.name | test("{protocol}"; "i")) | "\(.slug) -- \(.name) -- TVL: \(.tvl)"'
+   ```
+   If no match, try partial name or check the protocol's website for its DeFiLlama listing.
+   Then fetch full data with the resolved slug: `curl -s 'https://api.llama.fi/protocol/{slug}'` to get:
    - Current TVL and TVL history (sharp drops = red flag)
    - Number of audits listed
    - Chain(s)
@@ -55,6 +62,12 @@ Before deep analysis, run a quick triage to decide audit priority:
    Also note: `buy_tax`, `sell_tax`, `holder_count`, `lp_holders` (lock status), and `trust_list` status.
 
    **Chain IDs**: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 43114=Avalanche, 8453=Base, 324=zkSync. Solana is NOT supported by GoPlus token security API.
+
+   **Solana token fallback**: GoPlus does not support Solana SPL tokens. For Solana protocols, use these alternatives instead:
+   - **RugCheck**: `curl -s 'https://api.rugcheck.xyz/v1/tokens/{mint_address}/report'` -- returns risk score, mutable metadata, freeze authority, mint authority, top holders, LP lock status
+   - **Birdeye**: `curl -s -H 'X-API-KEY: public' 'https://public-api.birdeye.so/public/token_security?address={mint_address}'` -- holder concentration, LP info
+   - **Manual checks**: On Solana Explorer, verify: (1) mint authority (revoked = safer), (2) freeze authority (revoked = safer), (3) metadata mutability, (4) top holder concentration
+   Record the source as "RugCheck" or "Birdeye" instead of "GoPlus" in the report. If none of the alternatives return data, record "Solana Token Check: UNAVAILABLE" and note the gap.
 
    **Error handling**: GoPlus is a free API with undocumented rate limits. If the API returns an error, empty result, or times out:
    - Record "GoPlus: UNAVAILABLE" in the report rather than omitting the section
@@ -118,6 +131,33 @@ Before deep analysis, run a quick triage to decide audit priority:
    Floor at 0. Score meaning:
      80-100 = LOW risk | 50-79 = MEDIUM | 20-49 = HIGH | 0-19 = CRITICAL
    ```
+
+   **Data Confidence Score** (compute alongside triage, 0-100):
+   ```
+   Start at 0. Add points for each verified data point.
+   This measures HOW MUCH we could verify, not whether it's safe.
+   A high triage score with low confidence is MORE suspicious than a
+   moderate triage score with high confidence.
+
+   Verification points (+):
+     [ ] +15  Source code is open and verified on block explorer
+     [ ] +15  GoPlus token scan completed (not N/A or UNAVAILABLE)
+     [ ] +10  At least 1 audit report publicly available
+     [ ] +10  Multisig configuration verified on-chain (Safe API or Squads)
+     [ ] +10  Timelock duration verified on-chain or in docs
+     [ ] +10  Team identities publicly known (doxxed)
+     [ ] +10  Insurance fund size publicly disclosed
+     [ ] +5   Bug bounty program details publicly listed
+     [ ] +5   Governance process documented
+     [ ] +5   Oracle provider(s) confirmed
+     [ ] +5   Incident response plan published
+
+   Report both scores together: "Triage: 75/100 | Confidence: 40/100"
+   Interpretation:
+     80-100 = HIGH confidence (most claims verified)
+     50-79  = MEDIUM confidence (significant gaps remain)
+     0-49   = LOW confidence (most claims unverified -- treat score with skepticism)
+   ```
 6. **Quantitative baselines** (compute these for the report):
    - `Insurance Fund / TVL ratio` (healthy: >5%, concerning: <1%)
    - `Audit Coverage Score`:
@@ -149,7 +189,12 @@ Use web search to collect the following. Run these specific queries (replace `{p
    - Search: `"{protocol}" multisig OR timelock OR governance OR "admin key"`
 6. **Bug bounty**:
    - Search: `"{protocol}" site:immunefi.com`
-7. **Peer comparison**: identify 2-3 comparable protocols for benchmarking (same chain + category)
+7. **Peer comparison**: identify 2-3 comparable protocols for benchmarking. Selection criteria:
+   - **Same category** (e.g., lending vs lending, DEX vs DEX, perps vs perps)
+   - **Similar TVL tier**: within 5x of each other (e.g., $1B protocol compared to $200M-$5B peers, not $50M or $50B)
+   - **Prefer same chain** when possible, but cross-chain is acceptable if same-chain peers are unavailable
+   - **Prefer well-known protocols** with established security track records as at least one peer (provides a "gold standard" benchmark)
+   - **Never compare against the protocol's own forks** (e.g., don't compare Aave V3 to Aave V2)
 
 Also check DeFiLlama for current TVL and TVL trend data.
 
@@ -357,10 +402,12 @@ Compile findings into a structured report:
 - TVL Trend: {7d}% / {30d}% / {90d}%
 - Launch Date: {date}
 - Audit Date: {today}
+- Valid Until: {today + 90 days} (or sooner if: TVL changes >30%, governance upgrade, or security incident)
 - Source Code: Open / Closed / Partial
 
-## Quick Triage Score: {0-100}
+## Quick Triage Score: {0-100} | Data Confidence: {0-100}
 - Red flags found: {count} ({list})
+- Data points verified: {count} / {total checkable}
 
 ## Quantitative Metrics
 | Metric | Value | Benchmark (peers) | Rating |
@@ -402,6 +449,17 @@ Compile findings into a structured report:
 | Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
 | Operational Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
 | **Overall Risk** | **{level}** | **{summary}** | |
+
+**Overall Risk aggregation rule** (mechanical -- do NOT override with judgment):
+```
+1. If ANY category is CRITICAL → Overall = CRITICAL
+2. If 2+ categories are HIGH → Overall = HIGH
+3. If 1 category is HIGH, or 3+ are MEDIUM → Overall = MEDIUM
+4. Otherwise → Overall = LOW
+
+Governance & Admin counts as 2x weight (i.e., HIGH governance alone = 2 HIGHs → Overall HIGH).
+Categories rated N/A are excluded from the count.
+```
 
 ## Detailed Findings
 
@@ -461,6 +519,32 @@ Cross-reference against known DeFi attack vectors:
 - [ ] Bridge dependency with centralized validators?
 - [ ] Admin keys stored in hot wallets?
 - [ ] No key rotation policy?
+
+### Beanstalk-type (Flash Loan Governance Attack):
+- [ ] Governance votes weighted by token balance at vote time (no snapshot)?
+- [ ] Flash loans can be used to acquire voting power?
+- [ ] Proposal + execution in same block or short window?
+- [ ] No minimum holding period for voting eligibility?
+
+### Cream/bZx-type (Reentrancy + Flash Loan):
+- [ ] Accepts rebasing or fee-on-transfer tokens as collateral?
+- [ ] Read-only reentrancy risk (cross-contract callbacks before state update)?
+- [ ] Flash loan compatible without reentrancy guards?
+- [ ] Composability with protocols that expose callback hooks?
+
+### Curve-type (Compiler / Language Bug):
+- [ ] Uses non-standard or niche compiler (Vyper, Huff)?
+- [ ] Compiler version has known CVEs?
+- [ ] Contracts compiled with different compiler versions?
+- [ ] Code depends on language-specific behavior (storage layout, overflow)?
+
+### UST/LUNA-type (Algorithmic Depeg Cascade):
+- [ ] Stablecoin backed by reflexive collateral (own governance token)?
+- [ ] Redemption mechanism creates sell pressure on collateral?
+- [ ] Oracle delay could mask depegging in progress?
+- [ ] No circuit breaker on redemption volume?
+
+**Trigger rule**: matching 3+ indicators in any single category triggers an explicit warning in the report.
 
 ## Information Gaps
 - {list of questions that could NOT be answered from public info}
