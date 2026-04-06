@@ -9,6 +9,8 @@ metadata:
       bins:
         - curl
         - jq
+    optional_bins:
+        - solana
 ---
 
 # DeFi Security Audit Skill
@@ -290,30 +292,55 @@ Skip this step if the protocol operates on a single chain with no bridge depende
 - Key external dependencies (bridges, oracles, other protocols)
 - Composability risk (what breaks if a dependency fails?)
 
-### Step 8: On-Chain Verification (when possible)
+### Step 8: On-Chain Verification
 
-For Solana protocols, attempt to verify key claims on-chain:
-- Get the program's upgrade authority:
-  ```bash
-  solana program show <program_id> --url mainnet-beta
-  ```
-  The "Authority" field shows who can upgrade the program. If it's a Squads multisig, look it up at `https://v4.squads.so/` or search the Squads program for the vault address.
-- Verify multisig threshold and signers:
-  ```bash
-  # If using Squads v4, the multisig account data contains threshold and member list
-  # Search on Solana Explorer: https://explorer.solana.com/address/<authority_address>
-  ```
-- Check if the program is frozen (no upgrade authority):
-  If "Authority" is `None`, the program cannot be upgraded -- this eliminates admin key risk but also prevents bug fixes.
-- Verify timelock settings if contract is open source
-- Check recent admin transactions for unusual patterns via Solana Explorer or SolanaFM
+Run automated on-chain checks using `./scripts/onchain-check.sh`. Execute ALL applicable checks for the protocol's chain(s). Record every result in the report; mark anything the script could not determine as "UNVERIFIED".
 
-For EVM protocols:
-- Check Etherscan/block explorer for proxy admin, timelock contracts
-- Verify multisig via Gnosis Safe / similar
-- Check recent governance proposals and execution history
+#### For EVM protocols:
 
-Mark any claim that could NOT be verified on-chain as "UNVERIFIED" in the report.
+1. **Gnosis Safe multisig verification** -- if admin/owner/treasury addresses are known and suspected to be a Safe:
+   ```bash
+   ./scripts/onchain-check.sh safe <safe_address> <chain>
+   # chain: ethereum, arbitrum, polygon, optimism, base, gnosis, avalanche, bsc, scroll, linea, zksync, celo
+   ```
+   Extract from the output: threshold (m/n), owner count, owner addresses, modules, guard.
+   - threshold <= 2 with N >= 4: flag as HIGH (Drift-type attack surface)
+   - threshold = 1: flag as CRITICAL (equivalent to EOA)
+   - modules attached: flag as MEDIUM (can bypass threshold)
+
+2. **Contract verification & proxy detection** -- for key contract addresses (token, proxy admin, timelock):
+   ```bash
+   ./scripts/onchain-check.sh etherscan <contract_address> <chain_id> [ETHERSCAN_API_KEY]
+   # Reads ETHERSCAN_API_KEY env var if not passed as argument
+   # chain_id: 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 8453=Base
+   ```
+   Extract: source verification status, proxy status, implementation address.
+   - Source not verified: flag as HIGH
+   - Proxy contract: flag as MEDIUM, verify implementation is also verified
+
+#### For Solana protocols:
+
+1. **Program upgrade authority** -- for each program ID:
+   ```bash
+   ./scripts/onchain-check.sh solana-program <program_id>
+   ```
+   Extract: upgrade authority address, frozen status.
+   - Authority = None: program is immutable (LOW risk for admin key, but no bug fixes)
+   - Authority exists: proceed to step 2 to identify if it's a multisig or EOA
+
+2. **Authority account type** -- for the upgrade authority address:
+   ```bash
+   ./scripts/onchain-check.sh solana-account <authority_address>
+   ```
+   Detects whether the authority is:
+   - Squads v3/v4 multisig: follow up at https://v4.squads.so/ for threshold/members
+   - System Program-owned (EOA): flag as HIGH (single key controls upgrades)
+   - Unknown: record as UNVERIFIED
+
+#### Error handling:
+- If any API returns an error or is unavailable, record "API_UNAVAILABLE" in the report
+- Note the gap in the Information Gaps section
+- Never block the audit due to API failures -- proceed with available data
 
 ### Step 9: Generate Risk Report
 
@@ -492,3 +519,53 @@ Base URL: `https://api.gopluslabs.io/api/v1`
 **Helper script**: `./scripts/goplus-check.sh` wraps these endpoints with formatted output. See `./scripts/goplus-check.sh --help` for usage.
 
 Use `curl` via bash to fetch these programmatically when browser data is hard to extract.
+
+### On-Chain Verification (via onchain-check.sh)
+
+**Helper script**: `./scripts/onchain-check.sh` wraps the APIs below with formatted output and risk assessment.
+
+#### Safe Transaction Service (free, no API key)
+
+| Chain | Base URL |
+|-------|----------|
+| Ethereum | `https://safe-transaction-mainnet.safe.global/api/v1` |
+| Arbitrum | `https://safe-transaction-arbitrum.safe.global/api/v1` |
+| Polygon | `https://safe-transaction-polygon.safe.global/api/v1` |
+| Optimism | `https://safe-transaction-optimism.safe.global/api/v1` |
+| Base | `https://safe-transaction-base.safe.global/api/v1` |
+| BSC | `https://safe-transaction-bsc.safe.global/api/v1` |
+
+| Endpoint | Description |
+|----------|-------------|
+| `safes/{address}/` | Multisig config: threshold, owners[], nonce, modules, guard, version |
+
+#### Etherscan-family APIs (free tier, API key required)
+
+| Chain ID | API Base URL |
+|----------|--------------|
+| 1 (Ethereum) | `https://api.etherscan.io/api` |
+| 56 (BSC) | `https://api.bscscan.com/api` |
+| 137 (Polygon) | `https://api.polygonscan.com/api` |
+| 42161 (Arbitrum) | `https://api.arbiscan.io/api` |
+| 10 (Optimism) | `https://api-optimistic.etherscan.io/api` |
+| 8453 (Base) | `https://api.basescan.org/api` |
+
+| Endpoint | Description |
+|----------|-------------|
+| `?module=contract&action=getsourcecode&address={addr}` | Source verification, proxy status, implementation, compiler |
+
+#### Solana RPC (free, public)
+
+- **URL**: `https://api.mainnet-beta.solana.com` (or set `SOLANA_RPC_URL` env var)
+- **Method**: `getAccountInfo` (JSON-RPC POST) -- returns owner program, executable status, account data
+- The script prefers `solana` CLI if available (`solana program show` gives upgrade authority directly)
+
+#### SolanaFM API (free, no key)
+
+| Endpoint | Description |
+|----------|-------------|
+| `https://api.solana.fm/v0/accounts/{address}` | Account label, owner program, type detection |
+
+**Known Squads program IDs** (for detecting multisig accounts):
+- Squads v4: `SMPLecH534Ngo6gTACwFvEq4QYHGBqR1sFoJGDhrknp`, `SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf`
+- Squads v3: `SMPLKTQhrgo22hFCVq2VGX1KAktTWjeizkhrdB1eauK`

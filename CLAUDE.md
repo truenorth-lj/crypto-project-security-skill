@@ -13,17 +13,14 @@ This repo contains a Claude Code skill (`SKILL.md`) for performing comprehensive
 ├── SKILL.md               # The Claude Code skill definition (copy to .claude/skills/)
 ├── LICENSE                # MIT
 ├── scripts/
-│   └── goplus-check.sh    # GoPlus Security API helper script (token, address, dApp checks)
+│   ├── goplus-check.sh    # GoPlus Security API helper script (token, address, dApp checks)
+│   └── onchain-check.sh   # On-chain verification (Safe multisig, Etherscan, Solana RPC)
 └── docs/
     ├── methodology.md     # Audit framework design principles and methodology
-    └── examples/          # Example audit reports from validation testing
-        ├── drift-protocol-pre-hack.md   # CRITICAL -- validated against actual $285M hack
-        ├── aave-top-protocol.md         # LOW -- gold standard lending protocol
-        ├── zeta-markets-tail-protocol.md # HIGH -- defunct protocol with transparency gaps
-        ├── ethena-stablecoin.md          # MEDIUM -- custodial/CEX counterparty risks
-        ├── pendle-yield-tokenization.md  # MEDIUM -- immutable contracts, weak multisig
-        ├── jupiter-solana-dex.md         # MEDIUM -- strong audits, unverified governance
-        └── stargate-bridge.md           # MEDIUM -- cross-chain/bridge risk test case
+    ├── audit-reports.md   # Full index of all 55 audit reports (sortable by risk/TVL)
+    └── examples/          # 55 audit reports covering DeFiLlama top 100 protocols
+        ├── (3 CRITICAL, 11 HIGH, 34 MEDIUM, 7 LOW)
+        └── See docs/audit-reports.md for the full index
 ```
 
 ## Skill Installation

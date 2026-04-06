@@ -23,23 +23,48 @@ Given a protocol name, the skill:
 7. **On-Chain Verification** -- Attempts to verify claims against actual on-chain state (Squads multisig, Etherscan, etc.)
 8. **Generates Risk Report** -- Structured report with quantitative metrics, peer comparison, and cross-reference against known attack patterns
 
-## Test Results
+## Audit Reports
 
-Validated against seven protocols spanning different risk levels, protocol types, chains, and TVL tiers:
+Validated against 56 protocols spanning DeFiLlama's top 100 by TVL. Full index with all reports: **[docs/audit-reports.md](docs/audit-reports.md)**
 
-| Protocol | Type | TVL | Risk Rating | GoPlus | Audit Date | Key Finding |
-|----------|------|-----|-------------|--------|------------|-------------|
-| [**Drift Protocol** (pre-hack)](docs/examples/drift-protocol-pre-hack.md) | Perps (Solana) | $550M | **CRITICAL** | N/A (Solana) | 2026-03 (hypothetical) | Successfully identified all 3 attack vectors before the hack |
-| [**Aave**](docs/examples/aave-top-protocol.md) | Lending (Multi) | $23.6B | **LOW** | LOW (0 HIGH / 1 MED) | 2026-04-05 | Confirmed robust DAO governance + dual timelock + 6yr track record |
-| [**Zeta Markets**](docs/examples/zeta-markets-tail-protocol.md) | Perps (Solana) | $0 | **HIGH** | N/A (Solana) | 2026-04-05 | Flagged no audits, closed-source, undisclosed multisig config |
-| [**Ethena (USDe)**](docs/examples/ethena-stablecoin.md) | Stablecoin (ETH) | $6.64B | **MEDIUM** | LOW (0 HIGH / 2 MED) | 2026-04-05 | Strong smart contract security offset by custodial/CEX counterparty and funding rate risks |
-| [**Pendle**](docs/examples/pendle-yield-tokenization.md) | Yield (Multi) | $1.93B | **MEDIUM** | LOW (0 HIGH / 1 MED) | 2026-04-05 | Immutable core contracts + doxxed team, but 2/4 multisig, no documented timelock, 49% TVL decline |
-| [**Jupiter**](docs/examples/jupiter-solana-dex.md) | DEX/Perps (Solana) | $1.71B | **MEDIUM** | N/A (Solana) | 2026-04-05 | 10+ audits + tri-oracle, but DAO paused, no insurance fund, unverified multisig config |
-| [**Stargate**](docs/examples/stargate-bridge.md) | Bridge (Multi) | $115.8M | **MEDIUM** | LOW (0 HIGH / 1 MED) | 2026-04-05 | 4yr track record + $10M bounty, but only 2 DVNs, no confirmed timelock, DAO dissolved post-acquisition |
+**Risk distribution:** 7 LOW | 35 MEDIUM | 11 HIGH | 3 CRITICAL
+
+### Top Protocols by TVL
+
+| Protocol | Type | TVL | Risk | Key Finding |
+|----------|------|-----|------|-------------|
+| [**Aave**](docs/examples/aave-top-protocol.md) | Lending | $23.6B | **LOW** | Gold standard; dual timelock + 6yr track record |
+| [**Lido**](docs/examples/lido-liquid-staking.md) | Liquid Staking | $19.0B | **LOW** | Industry-leading staking with mature security |
+| [**SSV Network**](docs/examples/ssv-network-staking.md) | DVT/Staking | $15.0B | **MEDIUM** | No insurance for $15B; data breach; 4/6 multisig |
+| [**EigenLayer**](docs/examples/eigenlayer-restaking.md) | Restaking | $8.26B | **MEDIUM** | Strong governance; novel systemic slashing risk |
+| [**WBTC**](docs/examples/wbtc-wrapped-bitcoin.md) | Wrapped BTC | $7.8B | **MEDIUM** | 2-of-3 custody; Justin Sun/BiT Global controversy |
+| [**Morpho**](docs/examples/morpho-lending.md) | Lending | $7.06B | **LOW** | Immutable core (~650 LOC); 12+ audits; no admin keys |
+| [**Ethena**](docs/examples/ethena-stablecoin.md) | Synthetic Dollar | $6.64B | **MEDIUM** | Strong contracts; custodial/CEX counterparty risk |
+| [**Sky**](docs/examples/sky-lending-cdp.md) | CDP/Stablecoin | $6.58B | **LOW** | Pioneer CDP; strongest governance track record |
+| [**Hyperliquid**](docs/examples/hyperliquid-perps.md) | Perps | $4.79B | **MEDIUM** | 4-validator bridge; closed-source L1; DPRK recon |
+| [**EtherFi**](docs/examples/etherfi-liquid-restaking.md) | Liquid Restaking | $4.8B | **MEDIUM** | Good audits; governance gaps; TVL decline |
+| [**Ondo**](docs/examples/ondo-rwa.md) | RWA/Treasuries | $3.51B | **MEDIUM** | 20+ audits; centralized admin; 59% team token |
+| [**Uniswap**](docs/examples/uniswap-dex.md) | DEX | $3.09B | **LOW** | No admin keys; 48h timelock; $15.5M bug bounty |
+
+### Protocols Rated HIGH / CRITICAL -- Exercise Caution
+
+| Protocol | Type | TVL | Risk | Key Finding |
+|----------|------|-----|------|-------------|
+| [**Drift Protocol**](docs/examples/drift-protocol-pre-hack.md) | Perps | $550M | **CRITICAL** | Identified all 3 attack vectors before the $285M hack |
+| [**Notional Finance**](docs/examples/notional-lending.md) | Lending | $0 | **CRITICAL** | Defunct after Balancer exploit; 56% lender haircut |
+| [**Lybra Finance**](docs/examples/lybra-stablecoin.md) | Stablecoin | $337K | **CRITICAL** | Abandoned; 99.9% TVL decline; website dead |
+| [**JustLend**](docs/examples/justlend-lending.md) | Lending | $3.3B | **HIGH** | Justin Sun centralization; stale audits; opaque governance |
+| [**Grove Finance**](docs/examples/grove-finance-allocator.md) | Allocator | $2.87B | **HIGH** | Undisclosed governance; parent DNS hijack; 10mo old |
+| [**Falcon Finance**](docs/examples/falcon-finance-basis.md) | Basis Trading | $1.63B | **HIGH** | DWF Labs affiliation; prior depeg; 0.6% insurance/TVL |
+| [**USDD**](docs/examples/usdd-stablecoin.md) | Stablecoin | $1.29B | **HIGH** | Justin Sun unilateral control; reflexive TRX collateral |
+| [**Radiant Capital**](docs/examples/radiant-lending.md) | Lending | $1.72M | **HIGH** | $50M+ hack by DPRK; 98% TVL collapse |
+| [**SushiSwap**](docs/examples/sushiswap-dex.md) | DEX | $41M | **HIGH** | Governance instability; unaudited routers; 99.5% decline |
+| [**Alpaca Finance**](docs/examples/alpaca-leverage.md) | Leverage | $41.4M | **HIGH** | Protocol shutting down; withdraw immediately |
+| [**Bancor**](docs/examples/bancor-dex.md) | DEX | $27M | **HIGH** | IL protection collapse; 99% TVL decline; litigation |
+| [**Camelot**](docs/examples/camelot-dex.md) | DEX | $24.8M | **HIGH** | 2/3 multisig; no timelock; pseudonymous team |
+| [**Aura Finance**](docs/examples/aura-yield.md) | Yield | $96.9M | **HIGH** | Balancer exploit threatens core mechanism |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
-
-**GoPlus integration note:** Drift, Zeta, and Jupiter are Solana-native protocols; GoPlus token security API supports EVM chains only. For EVM protocols (Aave, Ethena, Pendle, Stargate), GoPlus provided automated token contract scanning that complemented the governance-focused manual analysis.
 
 ## Installation
 
