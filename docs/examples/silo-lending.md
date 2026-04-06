@@ -39,9 +39,9 @@ Red flags found: 6 (mintable token, sharp TVL decline, single oracle per silo, u
 |--------|-------|--------------------|--------|
 | Insurance Fund / TVL | Undisclosed | Aave ~2%, Compound ~1% | HIGH |
 | Audit Coverage Score | 5.5+ (many recent audits) | 1-3 avg | LOW risk |
-| Governance Decentralization | 3/5 multisig + DAO snapshot | Aave 6/10 Guardian | MEDIUM |
+| Governance Decentralization | 3/5 multisig + DAO snapshot (verified on-chain) | Aave 6/10 Guardian | MEDIUM |
 | Timelock Duration | 48h (V1 Timelock Controller) | 24-48h avg | LOW risk |
-| Multisig Threshold | 3/5 | 3/5 avg | MEDIUM |
+| Multisig Threshold | 3/5 (verified on-chain, Safe v1.3.0, no modules) | 3/5 avg | MEDIUM |
 | GoPlus Risk Flags | 0 HIGH / 1 MED (mintable) | -- | LOW risk |
 
 ## GoPlus Token Security (SILO on Ethereum: 0x6f80310CA7F2C654691D1383149Fa1A57d8AB1f8)
@@ -63,13 +63,13 @@ Red flags found: 6 (mintable token, sharp TVL decline, single oracle per silo, u
 | Trust List | No | -- |
 | Creator Honeypot History | No (0) | -- |
 
-GoPlus assessment: **LOW RISK**. The only flag is `is_mintable = 1`, meaning the token supply can be increased. This is expected for a governance token where the DAO can vote to increase supply. No honeypot, no hidden owner, no proxy, no tax, no trading restrictions. Holder count is relatively low (2,753) compared to peers like Aave (193K+), reflecting Silo's smaller market footprint. Owner address is 0xe8e8041cB5E3158A0829A19E014CA1cf91098554 (the 3/5 multisig).
+GoPlus assessment: **LOW RISK**. The only flag is `is_mintable = 1`, meaning the token supply can be increased. This is expected for a governance token where the DAO can vote to increase supply. No honeypot, no hidden owner, no proxy, no tax, no trading restrictions. Holder count is relatively low (2,753) compared to peers like Aave (193K+), reflecting Silo's smaller market footprint. Owner address is 0xe8e8041cB5E3158A0829A19E014CA1cf91098554 (the 3/5 multisig, verified on-chain via Safe API, April 2026).
 
 ## Risk Summary
 
 | Category | Risk Level | Key Concern | Verified? |
 |----------|-----------|-------------|-----------|
-| Governance & Admin | MEDIUM | 3/5 multisig controls all roles; signer identities undisclosed | Partial |
+| Governance & Admin | MEDIUM | 3/5 multisig controls all roles; signer addresses verified on-chain, real-world identities undisclosed | Verified on-chain (Safe API, April 2026) |
 | Oracle & Price Feeds | MEDIUM | Single oracle per silo; oracle-agnostic means variable quality | Partial |
 | Economic Mechanism | MEDIUM | No explicit insurance fund; bad debt not socialized but accrues | Partial |
 | Smart Contract | LOW | Extensive audit coverage (Certora, Sigma Prime, C4, Spearbit); V2 immutable configs | Y |
@@ -84,7 +84,7 @@ GoPlus assessment: **LOW RISK**. The only flag is `is_mintable = 1`, meaning the
 
 **Architecture**: Silo Finance uses a dual governance model:
 - **On-chain governance**: OpenZeppelin Governor (Compound-style delegated voting) with a TimelockController at 0xe1F03b7B0eBf84e9B9f62a1dB40f1Efb8FaA7d22 (48-hour / 172,800-second minimum delay) on Ethereum.
-- **Operational multisig**: A 3/5 Safe multisig at 0xE8e8041cB5E3158A0829A19E014CA1cf91098554, which holds ALL administrative roles across the V1 system -- Owner role, Manager role, and controls over interest rate models, price providers, silo parameters, and deposit limits.
+- **Operational multisig**: A 3/5 Safe multisig (Safe v1.3.0, no modules) at 0xE8e8041cB5E3158A0829A19E014CA1cf91098554 (verified on-chain via Safe API, April 2026), which holds ALL administrative roles across the V1 system -- Owner role, Manager role, and controls over interest rate models, price providers, silo parameters, and deposit limits.
 
 **Admin Key Surface Area (V1)**:
 - Owner can: set interest rate model config, manage protocol fees, configure asset parameters, set default LTV and liquidation thresholds, select price providers, manage silo versions, and replace existing silos.
@@ -97,7 +97,13 @@ GoPlus assessment: **LOW RISK**. The only flag is `is_mintable = 1`, meaning the
 - This is a meaningful security improvement over V1, as core lending parameters are locked at deployment.
 
 **Concerns**:
-- The 3/5 multisig controls critical functions with no public disclosure of signer identities (UNVERIFIED who the 5 signers are).
+- The 3/5 multisig threshold confirmed on-chain (Safe v1.3.0, no modules). Verified on-chain (Safe API, April 2026). The 5 owner addresses are:
+  - 0xe153437bC974cfE3E06C21c08AeBbf30abaefa2E
+  - 0x1fF60e85852Ac73cd05B69A8B6641fc24A3FC011
+  - 0x66B416a3114A737f0353DC74d1E12a7e23f686F9
+  - 0x22FF5BCE89fe7b6e78262893a535972163332C8b
+  - 0x236C4D2B6626FbA4bD4bbDc3428F013b63d88180
+- Signer real-world identities remain undisclosed despite addresses being known.
 - The 48h timelock exists on Ethereum for V1 governance actions but it is unclear whether all V2/V3 admin actions route through this timelock.
 - Snapshot-based governance is used for DAO proposals, which is off-chain and relies on the core team to execute results on-chain.
 
@@ -224,7 +230,7 @@ V1 (Historical):
 **Multi-Chain Deployment**:
 - Silo operates on 6 chains: Ethereum, Arbitrum, Sonic, Avalanche, Base, OP Mainnet.
 - Each chain has independent silo deployments via the SiloFactory contract.
-- The same 3/5 multisig (0xE8e8041cB5E3158A0829A19E014CA1cf91098554) appears to control administrative functions across chains (UNVERIFIED per-chain).
+- The same 3/5 multisig (0xE8e8041cB5E3158A0829A19E014CA1cf91098554, verified on Ethereum via Safe API, April 2026) appears to control administrative functions across chains (UNVERIFIED per-chain for non-Ethereum deployments).
 
 **Bridge Dependencies**:
 - xSILO (staked SILO) can be bridged between Sonic, Ethereum, Arbitrum, and Avalanche via **Chainlink CCIP (Transporter Bridge)**.
@@ -266,7 +272,7 @@ No CRITICAL risks identified. Key HIGH concerns:
 
 2. **Sharp TVL decline**: Combined TVL has dropped ~58% in 90 days (from ~$183M to ~$76.5M). While this may reflect broader market conditions, sustained TVL decline can reduce liquidator incentives and increase bad debt risk in smaller silos.
 
-3. **Single multisig controls everything**: The same 3/5 multisig holds Owner + Manager roles across V1, with undisclosed signer identities. A compromise of 3 signers would grant full protocol control on V1 (V2 is mitigated by config immutability).
+3. **Single multisig controls everything**: The same 3/5 multisig (verified on-chain, Safe v1.3.0, no modules) holds Owner + Manager roles across V1. Signer addresses are known but real-world identities remain undisclosed. A compromise of 3 signers would grant full protocol control on V1 (V2 is mitigated by config immutability).
 
 ## Peer Comparison
 
@@ -305,7 +311,7 @@ No CRITICAL risks identified. Key HIGH concerns:
 - [x] Multisig has low threshold (2/N with small N)? -- 3/5 is adequate but not strong
 - [ ] Zero or short timelock on governance actions? -- 48h timelock exists for V1 on-chain actions
 - [ ] Pre-signed transaction risk? -- N/A (EVM)
-- [x] Social engineering surface area (anon multisig signers)? -- YES, signer identities undisclosed
+- [x] Social engineering surface area (anon multisig signers)? -- YES, signer addresses verified on-chain but real-world identities undisclosed
 
 ### Euler/Mango-type (Oracle + Economic Manipulation):
 - [x] Low-liquidity collateral accepted? -- YES, permissionless silo creation allows any asset
@@ -320,7 +326,7 @@ No CRITICAL risks identified. Key HIGH concerns:
 
 ## Information Gaps
 
-- **Multisig signer identities**: The 5 signers of the 3/5 Safe multisig are not publicly disclosed. This is a governance transparency gap.
+- **Multisig signer identities**: The 5 owner addresses of the 3/5 Safe multisig have been verified on-chain (Safe API, April 2026; Safe v1.3.0, no modules), but real-world identities behind these addresses are not publicly disclosed. This remains a governance transparency gap.
 - **Insurance fund**: No public documentation of any insurance fund, safety module, or reserve mechanism. It is unclear how bad debt is ultimately resolved if liquidation fails to cover it.
 - **Cross-chain governance**: How DAO governance decisions propagate from Ethereum to other chains (Sonic, Arbitrum, Avalanche) is not documented.
 - **V2/V3 timelock coverage**: Whether the 48h TimelockController governs V2/V3 admin actions or only V1 is unclear.

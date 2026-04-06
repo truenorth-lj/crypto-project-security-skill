@@ -14,21 +14,22 @@
 - Audit Date: April 6, 2026
 - Source Code: Open (verified on Arbiscan; AMM based on Algebra open-source codebase)
 
-## Quick Triage Score: 47/100
+## Quick Triage Score: 41/100
 
 Starting at 100, subtracting:
 
 - -8: GoPlus: is_mintable = 1 (GRAIL token is mintable by owner, used for emissions)
 - -8: TVL dropped >30% in 90 days (-40.9%)
-- -8: Multisig threshold < 3 signers: Team multisig is 2/3
-- -15: Anonymous team with no prior track record (pseudonymous founders: Myrddin, Percival, SirIronBoots -- no public identities or verifiable prior projects)
+- -8: Multisig threshold < 3 signers: Team multisig is 2/3 (verified on-chain)
+- -5: Overlapping multisig signers: all 3 team keys also meet 3/6 ecosystem threshold (no signer independence)
+- -15: Anonymous team with no prior track record (pseudonymous founders -- no public identities or verifiable prior projects)
 - -5: No documented timelock on admin actions
 - -5: No confirmed bug bounty program on Immunefi
 - -5: Undisclosed multisig signer identities (all pseudonymous)
 
-Total deductions: -54. Raw score: 46. Floor at 0. **Score: 46/100 (HIGH risk)**
+Total deductions: -59. Raw score: 41. Floor at 0. **Score: 41/100 (HIGH risk)**
 
-Red flags found: 0 CRITICAL, 1 HIGH (anonymous team), 3 MEDIUM (mintable token, TVL decline, low multisig threshold), 3 LOW (no timelock, no bug bounty, undisclosed signer identities)
+Red flags found: 0 CRITICAL, 1 HIGH (anonymous team), 4 MEDIUM (mintable token, TVL decline, low multisig threshold, overlapping multisig signers), 3 LOW (no timelock, no bug bounty, undisclosed signer identities)
 
 ## Quantitative Metrics
 
@@ -38,7 +39,7 @@ Red flags found: 0 CRITICAL, 1 HIGH (anonymous team), 3 MEDIUM (mintable token, 
 | Audit Coverage Score | 1.0 (see calculation) | Uniswap ~4.0, Trader Joe ~2.5 | HIGH |
 | Governance Decentralization | xGRAIL gasless voting, but team executes | Uniswap on-chain gov | MEDIUM |
 | Timelock Duration | None documented | 24-48h industry avg | HIGH |
-| Multisig Threshold | 2/3 (team) / 4/6 (ecosystem) | 3/5 avg | MEDIUM |
+| Multisig Threshold | 2/3 (team) / 3/6 (ecosystem); 3 overlapping signers | 3/5 avg | HIGH |
 | GoPlus Risk Flags | 0 HIGH / 1 MED (mintable) | -- | LOW |
 
 ### Audit Coverage Score Calculation
@@ -85,21 +86,21 @@ Including Algebra audits: ~2.75
 | Trust List | No | -- |
 | Creator Honeypot History | No (0) | LOW |
 
-**Owner address:** 0x8b797d42d4b2c330575e18f7c793fe4383086807 (Ecosystem Multisig, 4/6 threshold)
+**Owner address:** 0x8b797d42d4b2c330575e18f7c793fe4383086807 (Ecosystem Multisig, 3/6 threshold -- verified on-chain via Safe API, April 2026)
 **Creator address:** 0x01bb7b44cc398aaa2b76ac6253f0f5634279db9d
 **Top holder:** 0x3caae25ee616f2c8e13c74da0813402eae3f496b (xGRAIL contract, 24.9%)
 
-**Note:** is_mintable = 1 means the owner (Ecosystem Multisig) can mint new GRAIL tokens. This is by design for the emission schedule (max supply 100,000 GRAIL), but represents a trust assumption on the 4/6 multisig.
+**Note:** is_mintable = 1 means the owner (Ecosystem Multisig) can mint new GRAIL tokens. This is by design for the emission schedule (max supply 100,000 GRAIL), but represents a trust assumption on the 3/6 multisig -- which shares all 3 signers with the 2/3 team multisig, meaning the same 3 keys that control core contracts can also mint tokens.
 
 ## Risk Summary
 
 | Category | Risk Level | Key Concern | Verified? |
 |----------|-----------|-------------|-----------|
-| Governance & Admin | HIGH | 2/3 team multisig controls core contracts; no timelock; pseudonymous signers | Partial |
+| Governance & Admin | HIGH | 2/3 team multisig controls core contracts; no timelock; 3/6 ecosystem multisig shares all 3 team signers | Verified on-chain (Safe API, April 2026) |
 | Oracle & Price Feeds | LOW | Uses Algebra TWAP from pool; DEX spot pricing (no external oracle dependency) | Partial |
 | Economic Mechanism | MEDIUM | xGRAIL lock-up creates illiquidity risk; Nitro pool emissions depend on team | N |
 | Smart Contract | MEDIUM | Camelot-specific audits are 3+ years old; Algebra layer better audited | Y |
-| Token Contract (GoPlus) | MEDIUM | Mintable by 4/6 multisig; max supply 100K but enforced by trust not code | Y |
+| Token Contract (GoPlus) | MEDIUM | Mintable by 3/6 multisig (controlled by same 3 keys as team multisig); max supply 100K but enforced by trust not code | Y |
 | Cross-Chain & Bridge | MEDIUM | Deployed on 10 chains; governance centralized on Arbitrum; bridge risk for orbit chains | Partial |
 | Operational Security | HIGH | Fully pseudonymous team; no public incident response plan; no Immunefi bounty | N |
 | **Overall Risk** | **HIGH** | **Pseudonymous team with low multisig threshold (2/3), no timelock, and stale audits** | |
@@ -108,11 +109,22 @@ Including Algebra audits: ~2.75
 
 ### 1. Governance & Admin Key
 
-**Team Multisig (2/3):** Address 0x460d0F7B75412592D14440857f715ec28861c2D7 controls the most critical protocol functions: Factory/Pairs, Master/NFTPools, NitroPoolFactory, xGRAIL, Real Yield Staking, and YieldBooster contracts. Signers are Myrddin, Percival, and SirIronBoots -- all pseudonymous.
+**Team Multisig (2/3):** Address 0x460d0F7B75412592D14440857f715ec28861c2D7 (Safe v1.3.0+L2, no modules) controls the most critical protocol functions: Factory/Pairs, Master/NFTPools, NitroPoolFactory, xGRAIL, Real Yield Staking, and YieldBooster contracts. Verified on-chain (Safe API, April 2026) -- threshold: 2/3, owners:
+- 0x2Fcbc80f9290edCE8BE09b14f3AfaFc8c89Bd2Da
+- 0x56140b52879D5b6D03449B912193c7b18210A7af
+- 0x01E5d631ba707a029C8A1555bDAc4805d7853E21
 
-A 2/3 threshold is the minimum viable multisig. If any single signer's key is compromised AND one other signer is colluding or social-engineered, the attacker gains full control of core contracts. This is well below industry standard (3/5 or higher).
+A 2/3 threshold is the minimum viable multisig and a classic Drift-type attack surface. If any single signer's key is compromised AND one other signer is colluding or social-engineered, the attacker gains full control of core contracts. This is well below industry standard (3/5 or higher). With no timelock and pseudonymous signers, there is zero recovery window.
 
-**Ecosystem Multisig (4/6):** Address 0x8b797d42d4b2c330575e18f7c793fe4383086807 controls GRAIL token minting, partnership/team/advisor vesting, and ecosystem funds. Signers include the three team members plus three additional pseudonymous participants (Coinflipcanada, Nach211, Wen Moon). The 4/6 threshold is more robust but still relies entirely on pseudonymous actors.
+**Ecosystem Multisig (3/6):** Address 0x8b797d42d4b2c330575e18f7c793fe4383086807 (Safe v1.3.0+L2, no modules) controls GRAIL token minting, partnership/team/advisor vesting, and ecosystem funds. Verified on-chain (Safe API, April 2026) -- threshold: **3/6** (NOT 4/6 as previously reported in some sources), owners:
+- 0x2Fcbc80f9290edCE8BE09b14f3AfaFc8c89Bd2Da (also in team multisig)
+- 0x56140b52879D5b6D03449B912193c7b18210A7af (also in team multisig)
+- 0x1a4afB607900fb1594c9EE8D119D748C6ccEC210
+- 0x29E3DdF94d76C97FcD43D07Fc8B15A03AD233A40
+- 0xb4390019Bff98aA112eAf93A91Ef5d9653e24C7a
+- 0x01E5d631ba707a029C8A1555bDAc4805d7853E21 (also in team multisig)
+
+**CRITICAL FINDING -- Overlapping Signers:** All 3 owners of the team multisig (0x2Fcbc...Da, 0x56140...af, 0x01E5d...21) also appear in the 3/6 ecosystem multisig. This means the same 3 keys that have full control of core contracts via the 2/3 team multisig also meet the 3/6 threshold on the ecosystem multisig. In practice, a single keyholder group controls BOTH multisigs. The 3/6 ecosystem threshold provides no additional security independence from the 2/3 team multisig.
 
 **No Timelock:** There is no documented or on-chain timelock on any admin actions. The team multisig can execute changes to core contracts immediately. This means there is no window for the community to react to malicious or erroneous governance actions.
 
@@ -188,24 +200,26 @@ Camelot is deployed across 10 chains according to DeFiLlama, with Arbitrum as th
 **Dependencies:**
 - Algebra Finance: Core AMM dependency. A vulnerability in Algebra would directly affect Camelot.
 - Arbitrum L2: Relies on Arbitrum's security model and bridge to Ethereum L1.
-- Gnosis Safe: Multisig infrastructure.
+- Gnosis Safe: Multisig infrastructure (both multisigs verified as Safe v1.3.0+L2, no modules).
 
 **Rating: HIGH**
 
 ## Critical Risks
 
-1. **LOW MULTISIG THRESHOLD (2/3) WITH NO TIMELOCK:** The team multisig controlling core contracts requires only 2 of 3 pseudonymous signers. Combined with zero timelock, this means two compromised or colluding signers could immediately modify Factory settings, pool parameters, NFT pool rewards, xGRAIL plugin allocations, and YieldBooster configurations. There is no community reaction window.
+1. **LOW MULTISIG THRESHOLD (2/3) WITH NO TIMELOCK -- DRIFT-TYPE ATTACK SURFACE:** The team multisig controlling core contracts requires only 2 of 3 pseudonymous signers. Combined with zero timelock, this means two compromised or colluding signers could immediately modify Factory settings, pool parameters, NFT pool rewards, xGRAIL plugin allocations, and YieldBooster configurations. There is no community reaction window. This configuration closely mirrors the governance weaknesses exploited in the Drift Protocol hack.
 
-2. **FULLY PSEUDONYMOUS TEAM WITH PROTOCOL CONTROL:** All signers on both multisigs are pseudonymous with no verifiable identity or prior track record. The team retains execution authority over governance proposals ("makes the final decision"). Users are trusting unknown individuals with admin access to ~$24.8M in TVL.
+2. **OVERLAPPING MULTISIG SIGNERS -- NO INDEPENDENCE BETWEEN MULTISIGS:** On-chain verification (Safe API, April 2026) confirms all 3 team multisig owners also sit on the 3/6 ecosystem multisig. The team's 3 keys alone meet the ecosystem multisig threshold. This means a single compromised keyholder group controls both core protocol operations AND token minting/ecosystem funds. The ecosystem multisig provides zero additional security separation.
 
-3. **STALE CAMELOT-SPECIFIC AUDITS:** The last Camelot-specific audit was in late 2022. The protocol has since migrated AMM versions, added plugins, expanded to 10 chains, and evolved its tokenomics. Critical custom contracts (xGRAIL, plugins, launchpad) have not been re-audited in over 3 years.
+3. **FULLY PSEUDONYMOUS TEAM WITH PROTOCOL CONTROL:** All signers on both multisigs are pseudonymous with no verifiable identity or prior track record. The team retains execution authority over governance proposals ("makes the final decision"). Users are trusting unknown individuals with admin access to ~$24.8M in TVL.
+
+4. **STALE CAMELOT-SPECIFIC AUDITS:** The last Camelot-specific audit was in late 2022. The protocol has since migrated AMM versions, added plugins, expanded to 10 chains, and evolved its tokenomics. Critical custom contracts (xGRAIL, plugins, launchpad) have not been re-audited in over 3 years.
 
 ## Peer Comparison
 
 | Feature | Camelot | Uniswap (Arbitrum) | Trader Joe (Avalanche) |
 |---------|---------|-------------------|----------------------|
 | Timelock | None documented | 2-day minimum | 48h on key actions |
-| Multisig | 2/3 (team), 4/6 (ecosystem) | Uniswap Governance (on-chain) | 3/5 multisig |
+| Multisig | 2/3 (team), 3/6 (ecosystem); 3 overlapping signers | Uniswap Governance (on-chain) | 3/5 multisig |
 | Audits | 3 Camelot-specific (2022); 7+ Algebra | 10+ (Trail of Bits, OpenZeppelin, etc.) | 5+ (Paladin, Omniscia, Halborn) |
 | Oracle | TWAP from pool (Algebra) | TWAP from pool (native) | TWAP from pool (native) |
 | Insurance/TVL | N/A (spot DEX) | N/A (spot DEX) | N/A (spot DEX) |
@@ -218,7 +232,7 @@ Camelot is deployed across 10 chains according to DeFiLlama, with Arbitrum as th
 
 1. **For users/LPs:** Be aware that Camelot's admin controls are concentrated in a 2/3 pseudonymous multisig with no timelock. Monitor the team multisig (0x460d...c2D7) for unusual transactions. Avoid allocating large positions relative to pool TVL.
 
-2. **For the Camelot team:** Implement a 24-48h timelock on all non-emergency admin actions. Increase the team multisig threshold to at least 3/5. List the bug bounty program on Immunefi with clear scope and competitive payouts. Commission a fresh audit of xGRAIL plugins, Nitro pools, and multi-chain deployment contracts.
+2. **For the Camelot team:** Implement a 24-48h timelock on all non-emergency admin actions. Increase the team multisig threshold to at least 3/5. Add independent (non-overlapping) signers to both multisigs to eliminate the single keyholder group controlling both. List the bug bounty program on Immunefi with clear scope and competitive payouts. Commission a fresh audit of xGRAIL plugins, Nitro pools, and multi-chain deployment contracts.
 
 3. **For protocols integrating Camelot:** Do not rely on Camelot TWAP as a sole price oracle for lending or perps. Use Chainlink or multi-source oracles with Camelot TWAP as a secondary check.
 
@@ -229,13 +243,13 @@ Camelot is deployed across 10 chains according to DeFiLlama, with Arbitrum as th
 ### Drift-type (Governance + Oracle + Social Engineering):
 - [x] Admin can list new collateral without timelock? -- N/A (DEX, not lending), but admin can modify pool parameters without timelock
 - [ ] Admin can change oracle sources arbitrarily? -- No external oracle dependency
-- [x] Admin can modify withdrawal limits? -- UNVERIFIED; team multisig controls core contracts
+- [x] Admin can modify withdrawal limits? -- Team multisig (2/3, verified on-chain) controls core contracts
 - [x] Multisig has low threshold (2/N with small N)? -- YES, 2/3 team multisig
 - [x] Zero or short timelock on governance actions? -- YES, no timelock documented
 - [ ] Pre-signed transaction risk (durable nonce on Solana)? -- N/A (EVM)
 - [x] Social engineering surface area (anon multisig signers)? -- YES, all signers pseudonymous
 
-**Drift-pattern match: 4/6 applicable flags triggered. ELEVATED RISK.**
+**Drift-pattern match: 4/6 applicable flags triggered. ELEVATED RISK.** On-chain verification confirms the 2/3 team multisig threshold and overlapping signers with the ecosystem multisig, strengthening this assessment.
 
 ### Euler/Mango-type (Oracle + Economic Manipulation):
 - [x] Low-liquidity collateral accepted? -- N/A for DEX core, but launchpad tokens have very thin liquidity
@@ -255,7 +269,8 @@ Camelot is deployed across 10 chains according to DeFiLlama, with Arbitrum as th
 - **Key storage practices:** No information on how multisig signer keys are stored (hardware wallets, HSMs, etc.).
 - **Key rotation policy:** No information on whether signers rotate keys or whether signer membership has changed since launch.
 - **Multi-chain admin controls:** It is unknown whether each chain deployment has its own admin or if Arbitrum governance controls all chains.
-- **GRAIL max supply enforcement:** The token is mintable. It is UNVERIFIED whether the 100,000 max supply cap is enforced in the smart contract or is merely a stated policy.
+- **GRAIL max supply enforcement:** The token is mintable. It is UNVERIFIED whether the 100,000 max supply cap is enforced in the smart contract or is merely a stated policy. Given that the 3 team keys can meet the 3/6 ecosystem multisig threshold, this is a heightened concern.
+- **Multisig signer independence:** Verified on-chain that all 3 team multisig owners overlap with the 3/6 ecosystem multisig. No information on whether the 3 additional ecosystem signers have any independent authority or veto power.
 - **Bug bounty details:** Camelot claims a bug bounty exists but no details on scope, maximum payout, or platform were found.
 - **Team identity:** No real-world identities, company registrations, or legal entities are publicly associated with Camelot.
 - **Revenue model sustainability:** Fee structure and protocol revenue relative to emissions are not clearly documented.

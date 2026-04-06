@@ -85,6 +85,60 @@ validate_evm_address() {
     fi
 }
 
+# Compute EIP-55 checksummed address (Safe API requires it)
+checksum_address() {
+    local addr="$1"
+    # EIP-55 uses Keccak-256 (NOT NIST SHA3-256)
+    if command -v python3 &>/dev/null; then
+        python3 -c "
+import sys
+addr = '${addr#0x}'.lower()
+try:
+    from web3 import Web3
+    print(Web3.to_checksum_address('0x' + addr))
+    sys.exit(0)
+except ImportError:
+    pass
+try:
+    from Crypto.Hash import keccak
+    h = keccak.new(digest_bits=256, data=addr.encode()).hexdigest()
+except ImportError:
+    try:
+        import _pysha3 as sha3
+        h = sha3.keccak_256(addr.encode()).hexdigest()
+    except ImportError:
+        # Fallback: no Keccak available, return as-is
+        print('0x' + addr)
+        sys.exit(0)
+result = '0x'
+for i, c in enumerate(addr):
+    if c in '0123456789':
+        result += c
+    elif int(h[i], 16) >= 8:
+        result += c.upper()
+    else:
+        result += c.lower()
+print(result)
+" 2>/dev/null
+    elif command -v node &>/dev/null; then
+        node -e "
+const { createHash } = require('crypto');
+const addr = '${addr#0x}'.toLowerCase();
+// Node's 'sha3-256' is actually Keccak-256 in older versions
+// Use ethers or manual approach
+try {
+    const { getAddress } = require('ethers');
+    console.log(getAddress('0x' + addr));
+} catch {
+    // Fallback: return as-is
+    console.log('0x' + addr);
+}
+" 2>/dev/null
+    else
+        echo "$addr"
+    fi
+}
+
 validate_solana_address() {
     local addr="$1"
     if [[ ! "$addr" =~ ^[1-9A-HJ-NP-Za-km-z]{32,44}$ ]]; then
@@ -151,6 +205,13 @@ cmd_safe() {
     fi
 
     validate_evm_address "$address"
+
+    # EIP-55 checksum required by Safe API
+    local checksummed
+    checksummed=$(checksum_address "$address")
+    if [ -n "$checksummed" ]; then
+        address="$checksummed"
+    fi
 
     local base_url
     base_url=$(safe_service_url "$chain") || exit 1

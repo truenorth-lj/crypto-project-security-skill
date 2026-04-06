@@ -13,7 +13,7 @@
 - Audit Date: April 5, 2026
 - Source Code: Open (GitHub: ethena-labs)
 
-## Quick Triage Score: 62/100
+## Quick Triage Score: 59/100
 
 Starting at 100, the following deductions apply:
 
@@ -23,9 +23,10 @@ Starting at 100, the following deductions apply:
 - (-5) INFO: Centralized exchange counterparty exposure for hedging positions (Binance, Bybit, OKX, Deribit)
 - (-5) INFO: Reserve fund / TVL ratio at ~1.18% is below the 5% healthy threshold
 - (-5) INFO: Oracle architecture for internal pricing not fully transparent
-- (-2) Minor: Reserve fund multisig is 4/10, lower threshold than the main protocol multisig (7/10)
+- (-2) Minor: Reserve fund multisig is 4/10, lower threshold than the main protocol multisig (5/11)
+- (-3) MEDIUM: Protocol multisig threshold is 5/11 (45%), significantly lower than the previously claimed 7/10 (70%) -- verified on-chain (Safe API, April 2026)
 
-Red flags found: 0 CRITICAL, 0 HIGH, 2 MEDIUM, 4 INFO
+Red flags found: 0 CRITICAL, 0 HIGH, 3 MEDIUM, 4 INFO
 
 Score meaning: 50-79 = MEDIUM risk. The score reflects the protocol's inherent custodial and counterparty dependencies rather than smart contract weaknesses.
 
@@ -37,7 +38,7 @@ Score meaning: 50-79 = MEDIUM risk. The score reflects the protocol's inherent c
 | Audit Coverage Score | 3.25 | 2-4 avg | LOW |
 | Governance Decentralization | Multisig + Governance Forum | DAO vote avg | MEDIUM |
 | Timelock Duration | Present (exact hours UNVERIFIED) | 24-48h avg | MEDIUM |
-| Multisig Threshold | 7/10 (protocol) / 4/10 (reserve) | 3/5 avg | LOW |
+| Multisig Threshold | 5/11 (protocol, verified on-chain) / 4/10 (reserve) | 3/5 avg | MEDIUM |
 | GoPlus Risk Flags | 0 HIGH / 2 MED (mintable x2) | -- | LOW |
 
 **Audit Coverage Score Calculation:**
@@ -99,7 +100,7 @@ GoPlus assessment: **LOW RISK** for both tokens. The only flag is `is_mintable =
 
 | Category | Risk Level | Key Concern | Verified? |
 |----------|-----------|-------------|-----------|
-| Governance & Admin | **MEDIUM** | 7/10 multisig is strong, but timelock specifics and bypass powers are not fully transparent | Partial |
+| Governance & Admin | **MEDIUM** | 5/11 multisig (45% threshold) is weaker than previously claimed 7/10 (70%); timelock specifics and bypass powers are not fully transparent | Verified on-chain (Safe API, April 2026) |
 | Oracle & Price Feeds | **MEDIUM** | Internal pricing for delta-neutral positions; USDe/USD feeds on Chainlink/Pyth exist for DeFi consumers | Partial |
 | Economic Mechanism | **HIGH** | Funding rate risk, CEX counterparty exposure, reserve fund at 1.18% of TVL | Partial |
 | Smart Contract | **LOW** | 7+ audits from reputable firms, no critical findings, $3M bug bounty | Y |
@@ -112,11 +113,26 @@ GoPlus assessment: **LOW RISK** for both tokens. The only flag is `is_mintable =
 
 ### 1. Governance & Admin Key -- MEDIUM
 
-**Multisig Configuration:**
-- Protocol smart contract ownership is held by a Gnosis Safe multisig requiring 7/10 confirmations
+**Multisig Configuration (Verified on-chain via Safe Transaction Service API, April 2026):**
+- Protocol smart contract ownership is held by a Gnosis Safe v1.3.0 multisig at `0x3b0AAf6e6fCd4a7cEEf8c92C32DFea9E64DC1862`
+- On-chain verification shows **5/11 threshold** (45%), not the 7/10 (70%) previously claimed in documentation -- this is a materially weaker security posture
+- 11 owner addresses verified on-chain:
+  - `0x18d32B1AB042b5E9a3430e77fDE8B4783A019234`
+  - `0xb93C042c688F1Cf038bab03C4F832F2630Bb7d8F`
+  - `0x66892C66711B2640360C3123E6C23C0cFa50550F`
+  - `0xE3F95F2e1aDEC092337FB5D93C1fE87558658b11`
+  - `0x99682F56F4ccCF61BD7e449924f2f62D395e1E45`
+  - `0x980742eDEA6b0df3566C19Ff4945c57E95449a13`
+  - `0x690d1E0fac0599874b849EE88AeA27F7b348e1f2`
+  - `0x54D0D64f7326b128959bf37Ed7B5f2510656a471`
+  - `0xFBE49A82CB2BFF6Fa4C2b1F0d165A5E1175Aac83`
+  - `0xE987E14b2E204fdf5827a3cFCa7D476E8Df6a99E`
+  - `0xe5cA87dA3A209aD85FdcbB515e1bD92644e9E1A6`
+- No Safe modules enabled (reduces module-based bypass risk)
 - Keys are geographically distributed across both internal Ethena Labs team members and external stakeholders
 - All multisig keys are cold wallets
 - The multisig is used solely for contract ownership, not for holding funds
+- **NOTE:** A 45% threshold means only 5 of 11 signers need to collude or be compromised for full admin control. This is below the commonly recommended 60%+ threshold for high-value DeFi protocols
 
 **Admin Powers (DEFAULT_ADMIN_ROLE via multisig):**
 - Transfer ownership of contracts
@@ -133,7 +149,7 @@ GoPlus assessment: **LOW RISK** for both tokens. The only flag is `is_mintable =
 **Reserve Fund Multisig:**
 - The reserve fund is controlled by a separate 4/10 multisig
 - All keys held by Ethena Labs contributors (no external signers disclosed)
-- Lower threshold than protocol multisig (4/10 vs 7/10) -- this is a weaker link
+- Lower threshold than protocol multisig (4/10 vs 5/11) -- this is a weaker link
 
 **Governance Process:**
 - ENA token holders vote on key protocol decisions via Snapshot-style governance
@@ -284,7 +300,7 @@ This is the highest-risk area for Ethena, as the protocol's novel design introdu
 | Feature | Ethena (USDe) | MakerDAO / Sky (DAI/USDS) | Frax (FRAX) |
 |---------|--------------|---------------------------|-------------|
 | Timelock | Present (duration UNVERIFIED) | 48h (GSM) | 24-72h |
-| Multisig | 7/10 Gnosis Safe | Governance DAO vote | 3/5 multisig |
+| Multisig | 5/11 Gnosis Safe (verified on-chain) | Governance DAO vote | 3/5 multisig |
 | Audits | 7+ (Code4rena, Pashov, Quantstamp, Cyfrin) | 20+ (Trail of Bits, others) | 10+ |
 | Oracle | Internal pricing + Chainlink/Pyth/RedStone | Chainlink + Maker oracles | Chainlink + Frax oracles |
 | Insurance/TVL | ~1.18% | ~5%+ (Surplus Buffer) | ~2% |
@@ -305,7 +321,7 @@ Ethena's smart contract security is comparable to peers, but its economic mechan
 
 4. **For DeFi integrators:** When accepting USDe as collateral, apply conservative collateral factors. The asset carries custodial and economic risks beyond typical stablecoins. Layer additional monitoring for CEX insolvency events.
 
-5. **For all users:** Ethena should be encouraged to publish exact timelock durations and emergency bypass powers transparently. The multisig configuration is strong (7/10), but the reserve fund multisig (4/10, internal-only signers) should include external signers.
+5. **For all users:** Ethena should be encouraged to publish exact timelock durations and emergency bypass powers transparently. The protocol multisig threshold of 5/11 (45%) is weaker than commonly documented (7/10) and should be raised to at least 7/11 (64%) for a protocol of this TVL. The reserve fund multisig (4/10, internal-only signers) should include external signers.
 
 ## Historical DeFi Hack Pattern Check
 
@@ -313,10 +329,10 @@ Ethena's smart contract security is comparable to peers, but its economic mechan
 - [ ] Admin can list new collateral without timelock? -- UNVERIFIED (admin can add collateral assets)
 - [ ] Admin can change oracle sources arbitrarily? -- UNVERIFIED
 - [ ] Admin can modify withdrawal limits? -- UNVERIFIED (redemption is permissioned to 20 addresses)
-- [x] Multisig has low threshold (2/N with small N)? -- NO: 7/10 is strong
+- [x] Multisig has low threshold (2/N with small N)? -- PARTIAL: 5/11 (45%) is below the recommended 60%+ threshold for high-value protocols (verified on-chain, April 2026)
 - [ ] Zero or short timelock on governance actions? -- UNVERIFIED (timelocks exist but duration unclear)
 - [ ] Pre-signed transaction risk? -- N/A (EVM, not Solana)
-- [ ] Social engineering surface area? -- LOW: keys distributed across internal/external parties
+- [ ] Social engineering surface area? -- MEDIUM: keys distributed across internal/external parties, but only 5 of 11 needed (lower barrier than expected)
 
 ### Euler/Mango-type (Oracle + Economic Manipulation):
 - [ ] Low-liquidity collateral accepted? -- NO: primarily ETH and BTC
@@ -348,4 +364,4 @@ These gaps are notable because Ethena's risk profile is dominated by off-chain o
 
 ## Disclaimer
 
-This analysis is based on publicly available information and web research as of April 5, 2026. It is NOT a formal smart contract audit. The findings reflect a point-in-time assessment; DeFi protocols change frequently. Always DYOR and consider professional auditing services for investment decisions. Ethena's risk profile is heavily influenced by off-chain factors (custodial arrangements, CEX counterparty exposure, funding rates) that cannot be verified on-chain.
+This analysis is based on publicly available information and web research as of April 5, 2026, with on-chain multisig verification via Safe Transaction Service API performed April 6, 2026. It is NOT a formal smart contract audit. The findings reflect a point-in-time assessment; DeFi protocols change frequently. Always DYOR and consider professional auditing services for investment decisions. Ethena's risk profile is heavily influenced by off-chain factors (custodial arrangements, CEX counterparty exposure, funding rates) that cannot be verified on-chain.

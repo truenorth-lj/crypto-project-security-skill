@@ -20,7 +20,7 @@ Red flags found: 4
 - MEDIUM: GoPlus is_proxy = 1, though timelock (10 days) is present on upgrades -- (-0, mitigated by timelock; proxy without timelock would be -8)
 - MEDIUM: GoPlus honeypot_with_same_creator = 1 -- creator address has deployed a contract flagged as honeypot by GoPlus heuristics. This is likely a false positive (the creator 0x7aad... is Kelp DAO Deployer, a known entity), but warrants noting -- (-8)
 - LOW: No documented dedicated insurance fund / TVL ratio (recently partnered with Nexus Mutual but no on-protocol reserve disclosed) -- (-5)
-- LOW: Multisig signer identities not publicly disclosed -- (-5)
+- LOW: Multisig signer addresses verified on-chain, but real-world identities not publicly disclosed -- (-5)
 - LOW: Single oracle provider (Chainlink) for LST price feeds -- (-5)
 - LOW: No documented on-chain governance for Kelp specifically (KERNEL governance in early stages) -- (-5)
 
@@ -32,9 +32,9 @@ Calculation: 100 - 8 - 5 - 5 - 5 - 5 = 72 (MEDIUM risk)
 |--------|-------|--------------------|--------|
 | Insurance Fund / TVL | Not disclosed (Nexus Mutual partnership only) | ether.fi: undisclosed; Renzo: undisclosed | HIGH |
 | Audit Coverage Score | 3.0 (see below) | ether.fi: ~3.5; Renzo: ~2.5 | LOW |
-| Governance Decentralization | 6/8 multisig + 10-day timelock; KERNEL governance nascent | ether.fi: multisig + DAO; Renzo: 4+ signers + 48h timelock | MEDIUM |
+| Governance Decentralization | 6/8 multisig + 10-day timelock; KERNEL governance nascent. Verified on-chain (Safe API, April 2026) | ether.fi: multisig + DAO; Renzo: 4+ signers + 48h timelock | MEDIUM |
 | Timelock Duration | 240h (10 days) | ether.fi: UNVERIFIED; Renzo: 48h | LOW |
-| Multisig Threshold | 6/8 | ether.fi: UNVERIFIED; Renzo: 4/N | LOW |
+| Multisig Threshold | 6/8 (verified on-chain, Safe v1.3.0, no modules) | ether.fi: UNVERIFIED; Renzo: 4/N | LOW |
 | GoPlus Risk Flags | 0 HIGH / 1 MED (proxy) | -- | LOW |
 
 **Audit Coverage Score Calculation:**
@@ -80,7 +80,7 @@ Calculation: 100 - 8 - 5 - 5 - 5 - 5 = 72 (MEDIUM risk)
 
 | Category | Risk Level | Key Concern | Verified? |
 |----------|-----------|-------------|-----------|
-| Governance & Admin | LOW | 6/8 multisig with 10-day timelock on upgrades; strong configuration | Partial |
+| Governance & Admin | LOW | 6/8 multisig with 10-day timelock on upgrades; strong configuration. Verified on-chain (Safe API, April 2026) | Y |
 | Oracle & Price Feeds | MEDIUM | Single oracle provider (Chainlink); hardcoded stETH/ETH = 1 assumption | Partial |
 | Economic Mechanism | MEDIUM | EigenLayer slashing risk not yet fully activated; no dedicated insurance fund | N |
 | Smart Contract | LOW | Multiple audits by reputable firms; open source; transparent proxy pattern | Y |
@@ -97,7 +97,17 @@ Calculation: 100 - 8 - 5 - 5 - 5 - 5 = 72 (MEDIUM risk)
 
 Kelp DAO has one of the stronger governance configurations among liquid restaking protocols:
 
-**Multisig:** The Kelp External Admin is a 6/8 Gnosis Safe multisig at 0xb3696a817D01C8623E66D156B6798291fa10a46d. The 6/8 threshold (75%) is above industry best practices (typically 60-70% threshold is considered adequate). This is significantly better than many peers.
+**Multisig:** The Kelp External Admin is a 6/8 Gnosis Safe multisig at 0xb3696a817D01C8623E66D156B6798291fa10a46d. Verified on-chain (Safe API, April 2026): Safe v1.3.0, threshold 6/8, no modules enabled. The 6/8 threshold (75%) is above industry best practices (typically 60-70% threshold is considered adequate). This is significantly better than many peers.
+
+**Verified Multisig Owners (8):**
+- 0xd4C9d49bBda1F074ba8363bfc5D72Fd2a9dFC77F
+- 0x3392fd462d9710Fbf3A5703818b9920C119DC080
+- 0x33307eFcFB13FA15d5DcDA4CF6AdADF298175544
+- 0x7AAd74b7f0d60D5867B59dbD377a71783425af47
+- 0xFCc1C98F887C93C38Deb5e38A6Fb820AD3fB9DFD
+- 0x61f45F63e06aa0DAE039BcFDa2c4Aab017441Ee7
+- 0x7Da5A697980E53Ecc137c0f7E96F4Cb656130098
+- 0x746d6a9f789999799AE7f5d62Aa70422F86826b6
 
 **Timelock:** All core contracts are behind TransparentUpgradeableProxy with a TimelockController at 0x49bD9989E31aD35B0A62c20BE86335196A3135B1, enforcing a minimum 10-day delay on upgrades. This is among the longest timelocks in the liquid restaking space and exceeds the 48-hour standard seen at Renzo and many lending protocols.
 
@@ -114,7 +124,7 @@ Kelp DAO has one of the stronger governance configurations among liquid restakin
 - Add/remove NodeDelegator contracts
 
 **Concerns:**
-- Multisig signer identities are not publicly disclosed (UNVERIFIED). While the team is doxxed, the specific 8 signers on the multisig are not documented publicly.
+- Multisig signer addresses are verified on-chain (see above), but the real-world identities or institutional affiliations behind each address remain undisclosed.
 - No on-chain governance for Kelp-specific decisions yet. KERNEL token governance launched in April 2025 but specifics of Kelp-level governance delegation remain unclear.
 - The admin can update price feeds and add/remove NodeDelegator contracts. While these go through the timelock, they represent significant power vectors.
 
@@ -263,7 +273,7 @@ All are well-established operators with high attestation rates. Operator selecti
 1. **For users:** Kelp is one of the better-governed liquid restaking protocols. The 10-day timelock and 6/8 multisig provide meaningful protection. However, users should understand they are exposed to (a) EigenLayer slashing risk as it activates, (b) Chainlink oracle risk, and (c) LayerZero bridge risk on L2s. Consider maintaining positions primarily on Ethereum mainnet where the native withdrawal mechanism is available.
 
 2. **For the protocol:**
-   - Disclose multisig signer identities or at minimum their institutional affiliations
+   - Disclose multisig signer real-world identities or at minimum their institutional affiliations (addresses now verified on-chain)
    - Add a secondary oracle provider (e.g., Redstone, Pyth) as a fallback for LST price feeds
    - Remove the hardcoded stETH/ETH = 1 assumption and use a live price feed
    - Increase bug bounty cap -- $250K is low for $1.3B TVL; consider scaling to $1M+
@@ -282,7 +292,7 @@ All are well-established operators with high attestation rates. Operator selecti
 - [ ] Multisig has low threshold (2/N with small N)? -- NO, 6/8 threshold is strong
 - [ ] Zero or short timelock on governance actions? -- NO, 10-day timelock
 - [ ] Pre-signed transaction risk? -- N/A (EVM, not Solana)
-- [x] Social engineering surface area (anon multisig signers)? -- YES, signer identities undisclosed
+- [x] Social engineering surface area (anon multisig signers)? -- YES, signer addresses verified on-chain but real-world identities undisclosed
 
 ### Euler/Mango-type (Oracle + Economic Manipulation):
 - [ ] Low-liquidity collateral accepted? -- NO, only ETH, stETH, ETHx (highly liquid)
@@ -299,7 +309,7 @@ All are well-established operators with high attestation rates. Operator selecti
 
 ## Information Gaps
 
-- Specific identities or institutional affiliations of the 8 multisig signers
+- ~~Multisig signer addresses~~ (RESOLVED: 8 owner addresses verified on-chain via Safe API, April 2026). Real-world identities or institutional affiliations of the 8 signers remain undisclosed
 - Whether cross-chain OFT deployments (LayerZero) are under the same 6/8 multisig and 10-day timelock as core Ethereum contracts
 - LayerZero DVN configuration for Kelp's OFT (which verifiers, what threshold)
 - Exact size and scope of Nexus Mutual insurance coverage relative to protocol TVL
