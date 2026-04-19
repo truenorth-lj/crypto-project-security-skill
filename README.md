@@ -27,7 +27,7 @@ Given a protocol name, the skill:
 
 Validated against 56 protocols spanning DeFiLlama's top 100 by TVL. Full index with all reports: **[docs/audit-reports.md](docs/audit-reports.md)**
 
-**Risk distribution:** 7 LOW | 35 MEDIUM | 11 HIGH | 3 CRITICAL
+**Risk distribution:** 7 LOW | 34 MEDIUM | 11 HIGH | 4 CRITICAL
 
 ### Top Protocols by TVL
 
@@ -50,6 +50,7 @@ Validated against 56 protocols spanning DeFiLlama's top 100 by TVL. Full index w
 
 | Protocol | Type | TVL | Risk | Key Finding |
 |----------|------|-----|------|-------------|
+| [**Kelp DAO**](docs/examples/kelp-post-hack-20260419.md) | Liquid Restaking | $1.3B | **CRITICAL** | $292M exploited via LayerZero bridge spoofing + Aave bad debt cascade (2026-04-18). [Pre-hack audit](docs/examples/kelp-liquid-restaking.md) rated MEDIUM |
 | [**Drift Protocol**](docs/examples/drift-protocol-pre-hack.md) | Perps | $550M | **CRITICAL** | Identified all 3 attack vectors before the $285M hack |
 | [**Notional Finance**](docs/examples/notional-lending.md) | Lending | $0 | **CRITICAL** | Defunct after Balancer exploit; 56% lender haircut |
 | [**Lybra Finance**](docs/examples/lybra-stablecoin.md) | Stablecoin | $337K | **CRITICAL** | Abandoned; 99.9% TVL decline; website dead |
@@ -99,7 +100,7 @@ In Claude Code, use any of these trigger phrases:
 
 ## Attack Pattern Detection
 
-The skill cross-references findings against three major DeFi exploit categories:
+The skill cross-references findings against eight major DeFi exploit categories (the full list includes Beanstalk-type, Cream/bZx-type, Curve-type, UST/LUNA-type in `SKILL.md`). Key patterns:
 
 ### Drift-type (Governance + Oracle + Social Engineering)
 - Admin can list new collateral without timelock
@@ -120,6 +121,16 @@ The skill cross-references findings against three major DeFi exploit categories:
 - Bridge dependency with centralized validators
 - Admin keys stored in hot wallets
 - No key rotation policy
+
+### Kelp-type (Bridge Message Spoofing + Composability Cascade) -- NEW
+- Bridge message validation relies on single messaging layer
+- DVN/verifier configuration not publicly documented
+- No rate limiting on bridge-released token volume
+- Bridged token accepted as collateral on lending protocols (Aave, Compound, Euler)
+- Token deployed on 5+ chains via same bridge provider
+- Stolen/unbacked tokens used as collateral → borrow real assets → bad debt cascade
+
+> In the Kelp hack ($292M, April 2026), the attacker forged a LayerZero cross-chain message to drain rsETH, then deposited unbacked rsETH on Aave V3 as collateral to borrow WETH, creating $290M+ in bad debt across multiple lending protocols.
 
 ## Quantitative Metrics
 

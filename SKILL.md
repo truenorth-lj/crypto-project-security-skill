@@ -118,6 +118,9 @@ Before deep analysis, run a quick triage to decide audit priority:
      [ ] Multisig threshold < 3 signers (e.g., 2/N)
      [ ] GoPlus: slippage_modifiable = 1
      [ ] GoPlus: transfer_pausable = 1
+     [ ] No third-party security certification (SOC 2 / ISO 27001) for off-chain operations
+     [ ] Bridge token accepted as lending collateral on 3+ protocols without rate limits
+     [ ] Single bridge provider for cross-chain deployments on 5+ chains
 
    LOW flags (-5 each):
      [ ] No documented timelock on admin actions
@@ -127,6 +130,9 @@ Before deep analysis, run a quick triage to decide audit priority:
      [ ] Insurance fund / TVL < 1% or undisclosed
      [ ] Undisclosed multisig signer identities
      [ ] DAO governance paused or dissolved
+     [ ] No published key management policy (HSM, MPC, key ceremony)
+     [ ] No disclosed penetration testing (infrastructure, not just smart contract audit)
+     [ ] Custodial dependency without disclosed custodian certification
 
    Floor at 0. Score meaning:
      80-100 = LOW risk | 50-79 = MEDIUM | 20-49 = HIGH | 0-19 = CRITICAL
@@ -151,6 +157,10 @@ Before deep analysis, run a quick triage to decide audit priority:
      [ ] +5   Governance process documented
      [ ] +5   Oracle provider(s) confirmed
      [ ] +5   Incident response plan published
+     [ ] +5   SOC 2 Type II or ISO 27001 certification verified
+     [ ] +5   Published key management policy (HSM, MPC, key ceremony)
+     [ ] +5   Regular penetration testing disclosed (infrastructure-level)
+     [ ] +5   Bridge DVN/verifier configuration publicly documented (if cross-chain)
 
    Report both scores together: "Triage: 75/100 | Confidence: 40/100"
    Interpretation:
@@ -332,10 +342,31 @@ Skip this step if the protocol operates on a single chain with no bridge depende
 - Published incident response plan?
 - Emergency pause capability?
 - Communication channels for security alerts?
+- **Emergency response time benchmark**: How fast can the team pause the protocol? (Kelp took 46 minutes; best practice is <15 minutes for bridge exploits)
 
 #### 7.3 Dependencies
 - Key external dependencies (bridges, oracles, other protocols)
 - Composability risk (what breaks if a dependency fails?)
+- **Downstream lending exposure**: Is the protocol's token accepted as collateral on Aave, Compound, Euler, or other lending protocols? If so, an exploit could cascade into bad debt across those protocols (see Kelp-type pattern)
+
+#### 7.4 Off-Chain Controls & Certifications
+
+On-chain security can be verified by reading contracts. Off-chain controls (key management, operational procedures, access controls) CANNOT be verified from public blockchain data alone -- they require third-party attestation.
+
+Evaluate the following. Search: `"{protocol}" SOC 2 OR ISO 27001 OR "security certification" OR "key management" OR "penetration test"`
+
+- **Third-party security certifications**: Does the protocol or its operating entity hold SOC 2 Type II, ISO 27001, or ISO 27017? These are the industry standards for verifying operational security controls.
+- **Key management**: Does the team use HSMs (Hardware Security Modules), MPC (Multi-Party Computation) custody (e.g., Fireblocks, Fordefi), or documented key ceremony procedures? Is there a key rotation policy?
+- **Custodial counterparty risk**: If the protocol uses centralized custody (e.g., Ethena uses Copper/Ceffu), does the custodian hold independent security certifications? What insurance coverage exists?
+- **Penetration testing**: Has the protocol undergone infrastructure/application penetration testing (distinct from smart contract audits)? Are results published?
+- **Operational segregation**: Do developers have production key access? Is there separation of duties between development, deployment, and admin operations?
+- **Employee / insider threat controls**: Background checks, access logging, principle of least privilege -- especially relevant after DPRK social engineering attacks (Radiant Capital, Drift Protocol)
+
+**Rating guidance**:
+- Has SOC 2 + published key management + regular pentest → LOW
+- Has at least one certification OR published security practices → MEDIUM
+- No certifications, no published security practices, opaque operations → HIGH
+- Anonymous team with no verifiable security practices → CRITICAL
 
 ### Step 8: On-Chain Verification
 
@@ -439,16 +470,19 @@ Compile findings into a structured report:
 
 ## Risk Summary
 
-| Category | Risk Level | Key Concern | Verified? |
-|----------|-----------|-------------|-----------|
-| Governance & Admin | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
-| Oracle & Price Feeds | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
-| Economic Mechanism | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
-| Smart Contract | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
-| Token Contract (GoPlus) | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
-| Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
-| Operational Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
-| **Overall Risk** | **{level}** | **{summary}** | |
+| Category | Risk Level | Key Concern | Source | Verified? |
+|----------|-----------|-------------|--------|-----------|
+| Governance & Admin | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| Oracle & Price Feeds | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| Economic Mechanism | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| Smart Contract | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| Token Contract (GoPlus) | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| Off-Chain Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {O} | {Y/N/Partial} |
+| Operational Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
+| **Overall Risk** | **{level}** | **{summary}** | | |
+
+**Source column**: S = STRUCTURAL (current architecture risk), H = HISTORICAL (past incident signal), O = OPERATIONAL (off-chain controls risk). A category can have multiple sources (e.g., S/H).
 
 **Overall Risk aggregation rule** (mechanical -- do NOT override with judgment):
 ```
@@ -458,6 +492,7 @@ Compile findings into a structured report:
 4. Otherwise → Overall = LOW
 
 Governance & Admin counts as 2x weight (i.e., HIGH governance alone = 2 HIGHs → Overall HIGH).
+Cross-Chain & Bridge counts as 2x weight if protocol is deployed on 5+ chains (Kelp lesson).
 Categories rated N/A are excluded from the count.
 ```
 
@@ -543,6 +578,19 @@ Cross-reference against known DeFi attack vectors:
 - [ ] Redemption mechanism creates sell pressure on collateral?
 - [ ] Oracle delay could mask depegging in progress?
 - [ ] No circuit breaker on redemption volume?
+
+### Kelp-type (Bridge Message Spoofing + Composability Cascade):
+- [ ] Protocol uses a cross-chain bridge (LayerZero, Wormhole, etc.) for token minting or reserve release?
+- [ ] Bridge message validation relies on a single messaging layer without independent verification?
+- [ ] DVN/relayer/verifier configuration is not publicly documented or auditable?
+- [ ] Bridge can release or mint tokens without rate limiting per transaction or per time window?
+- [ ] Bridged/wrapped token is accepted as collateral on lending protocols (Aave, Compound, Euler)?
+- [ ] No circuit breaker to pause minting if bridge-released volume exceeds normal thresholds?
+- [ ] Emergency pause response time > 15 minutes (Kelp took 46 minutes)?
+- [ ] Bridge admin controls (trusted remotes, rate limits) are under different governance than core protocol?
+- [ ] Token is deployed on 5+ chains via same bridge provider (single point of failure)?
+
+**Why this pattern matters**: The attacker does not need to keep the stolen tokens. By depositing unbacked tokens as collateral in lending protocols and borrowing real assets (ETH, USDC), the damage cascades far beyond the initially exploited protocol. In the Kelp hack ($292M, April 2026), the attacker created $290M+ in bad debt across Aave, Compound, and Euler -- affecting protocols that were never directly exploited.
 
 **Trigger rule**: matching 3+ indicators in any single category triggers an explicit warning in the report.
 
