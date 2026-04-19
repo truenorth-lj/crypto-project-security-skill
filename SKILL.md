@@ -118,7 +118,7 @@ Before deep analysis, run a quick triage to decide audit priority:
      [ ] Multisig threshold < 3 signers (e.g., 2/N)
      [ ] GoPlus: slippage_modifiable = 1
      [ ] GoPlus: transfer_pausable = 1
-     [ ] No third-party security certification (SOC 2 / ISO 27001) for off-chain operations
+     [ ] No third-party security certification (SOC 2 / ISO 27001 / equivalent) for off-chain operations
      [ ] Bridge token accepted as lending collateral on 3+ protocols without rate limits
      [ ] Single bridge provider for cross-chain deployments on 5+ chains
 
