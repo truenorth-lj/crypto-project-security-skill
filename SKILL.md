@@ -109,6 +109,7 @@ Before deep analysis, run a quick triage to decide audit priority:
      [ ] GoPlus: selfdestruct = 1
      [ ] GoPlus: can_take_back_ownership = 1
      [ ] No multisig (single EOA admin key)
+     [ ] Single bridge provider for cross-chain deployments on 5+ chains (Kelp lesson)
 
    MEDIUM flags (-8 each):
      [ ] GoPlus: is_proxy = 1 AND no timelock on upgrades
@@ -120,7 +121,6 @@ Before deep analysis, run a quick triage to decide audit priority:
      [ ] GoPlus: transfer_pausable = 1
      [ ] No third-party security certification (SOC 2 / ISO 27001 / equivalent) for off-chain operations
      [ ] Bridge token accepted as lending collateral on 3+ protocols without rate limits
-     [ ] Single bridge provider for cross-chain deployments on 5+ chains
 
    LOW flags (-5 each):
      [ ] No documented timelock on admin actions
