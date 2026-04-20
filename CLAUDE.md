@@ -17,9 +17,9 @@ This repo contains a Claude Code skill (`SKILL.md`) for performing comprehensive
 │   └── onchain-check.sh   # On-chain verification (Safe multisig, Etherscan, Solana RPC)
 └── docs/
     ├── methodology.md     # Audit framework design principles and methodology
-    ├── audit-reports.md   # Full index of all 55 audit reports (sortable by risk/TVL)
-    └── examples/          # 55 audit reports covering DeFiLlama top 100 protocols
-        ├── (3 CRITICAL, 11 HIGH, 34 MEDIUM, 7 LOW)
+    ├── audit-reports.md   # Full index of all 76 audit reports (sortable by risk/TVL)
+    └── examples/          # 76 audit reports covering DeFiLlama top 100 protocols + top perp exchanges
+        ├── (8 CRITICAL, 19 HIGH, 42 MEDIUM, 7 LOW)
         └── See docs/audit-reports.md for the full index
 ```
 

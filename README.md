@@ -25,9 +25,9 @@ Given a protocol name, the skill:
 
 ## Audit Reports
 
-Validated against 56 protocols spanning DeFiLlama's top 100 by TVL. Full index with all reports: **[docs/audit-reports.md](docs/audit-reports.md)**
+Validated against 76 protocols spanning DeFiLlama's top 100 by TVL plus top perp exchanges by open interest. Full index with all reports: **[docs/audit-reports.md](docs/audit-reports.md)**
 
-**Risk distribution:** 7 LOW | 34 MEDIUM | 11 HIGH | 4 CRITICAL
+**Risk distribution:** 7 LOW | 42 MEDIUM | 19 HIGH | 8 CRITICAL
 
 ### Top Protocols by TVL
 
@@ -64,6 +64,19 @@ Validated against 56 protocols spanning DeFiLlama's top 100 by TVL. Full index w
 | [**Bancor**](docs/examples/bancor-dex.md) | DEX | $27M | **HIGH** | IL protection collapse; 99% TVL decline; litigation |
 | [**Camelot**](docs/examples/camelot-dex.md) | DEX | $24.8M | **HIGH** | 2/3 multisig; no timelock; pseudonymous team |
 | [**Aura Finance**](docs/examples/aura-yield.md) | Yield | $96.9M | **HIGH** | Balancer exploit threatens core mechanism |
+| [**Resolv**](docs/examples/resolv-stablecoin.md) | Stablecoin | $57.6M | **CRITICAL** | Exploited March 2026 ($25M); USR peg NOT restored; protocol paused |
+| [**Vertex**](docs/examples/vertex-perps.md) | Perps | $0 | **CRITICAL** | Shut down Aug 2025; DAO dissolved; team acquired by Ink Foundation |
+| [**Paradex**](docs/examples/paradex-perps.md) | Perps | $46.9M | **CRITICAL** | 2/5 multisig + zero timelock; can drain all bridged USDC |
+| [**Raydium**](docs/examples/raydium-dex.md) | DEX | $1B+ | **HIGH** | Upgrade authority appears EOA; zero timelock; 2022 key compromise |
+| [**Aster**](docs/examples/aster-perps.md) | Perps | $538M | **HIGH** | Anonymous team; suspected wash trading; DeFiLlama delisted once |
+| [**Lighter**](docs/examples/lighter-perps.md) | Perps | $502M | **HIGH** | Timelock bypassable to 0s; centralized sequencer outage |
+| [**edgeX**](docs/examples/edgex-perps.md) | Perps | $190M | **HIGH** | No multisig/timelock disclosed; $10K bug bounty |
+| [**Extended**](docs/examples/extended-perps.md) | Perps | $174.7M | **HIGH** | Doxxed team but unverified multisig; no bug bounty |
+| [**Ostium**](docs/examples/ostium-perps.md) | Perps/RWA | $144M | **HIGH** | 6+ audits but governance fully opaque |
+| [**ApeX Omni**](docs/examples/apex-omni-perps.md) | Perps | $125M | **HIGH** | Zero governance transparency; 0 DeFiLlama audits |
+| [**Usual**](docs/examples/usual-stablecoin.md) | Stablecoin | $101M | **HIGH** | USD0++ depegged; TVL -94.6%; 75.8% token concentration |
+| [**GRVT**](docs/examples/grvt-perps.md) | Perps | $63.5M | **HIGH** | 2/3 multisig + 0s timelock; validium risk |
+| [**Infrared**](docs/examples/infrared-berachain.md) | Liquid Staking/PoL | $52M | **HIGH** | 24 audits but governance opaque; TVL -97% |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
 
