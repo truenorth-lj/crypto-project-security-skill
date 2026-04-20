@@ -1,9 +1,9 @@
 {
-  "name": "DeFi Security Audit",
-  "slug": "defi-security-audit",
-  "version": "v1.2.0",
+  "name": "DeFi Risk Analysis",
+  "slug": "defi-risk-analysis",
+  "version": "v2.0.0",
   "platforms": ["claude-code", "openclaw", "codex"],
   "entry_point": "SKILL.md",
-  "description": "Comprehensive DeFi protocol security audits — governance, oracles, admin privileges, economic mechanisms, and attack pattern matching.",
-  "triggers": ["audit defi", "analyze protocol", "check security", "defi risk", "protocol vulnerability", "is it safe"]
+  "description": "Structured risk analysis for DeFi protocols across smart contract, off-chain, and track record dimensions. Includes audited-vs-deployed drift detection. Not a formal audit.",
+  "triggers": ["risk analysis", "analyze protocol", "audit defi", "check security", "defi risk", "protocol vulnerability", "is it safe"]
 }

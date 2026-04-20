@@ -26,16 +26,29 @@ Quick quantitative scan before deep analysis. Any single red flag escalates the 
 | Anonymous team | Reduced accountability, higher social engineering risk |
 | Closed-source contracts | Cannot verify security claims |
 
-### 2. Six-Pillar Assessment
+### 2. Three-Dimension Assessment
 
-Each pillar receives an independent risk rating (LOW / MEDIUM / HIGH / CRITICAL):
+Risk is grouped into three top-level dimensions. Each dimension has sub-categories; each sub-category receives an independent rating (LOW / MEDIUM / HIGH / CRITICAL). The dimension rating is the MAX of its sub-categories (with weighting rules in SKILL.md).
 
-1. **Governance & Admin** -- Who holds the keys, and what can they do? Includes timelock bypass detection and token concentration / whale risk for on-chain governance.
-2. **Oracle & Price Feeds** -- Can prices be manipulated or fabricated?
-3. **Economic Mechanism** -- Does the math hold under stress?
-4. **Smart Contract** -- Has the code been reviewed and tested?
-5. **Cross-Chain & Bridge** -- Are multi-chain deployments and bridge dependencies secure? (N/A for single-chain protocols with no bridge dependencies.)
-6. **Operational Security** -- Is the team trustworthy and prepared?
+#### A. Smart Contract Risk — what the code does and how it is deployed
+1. **Code Quality & Audit Coverage** — audits, bug bounty, battle testing, source code review.
+2. **Audited vs Deployed Drift** — is the audited code actually running in production? Post-audit proxy upgrades without re-audit are a commonly ignored risk.
+3. **Oracle & Price Feeds** — can prices be manipulated or fabricated?
+4. **Economic Mechanism** — does the math hold under stress?
+5. **Token Contract (GoPlus)** — honeypot, owner privileges, trading restrictions.
+6. **Cross-Chain & Bridge** — multi-chain deployments and bridge dependencies (N/A for single-chain).
+
+#### B. Off-Chain Risk — people, processes, procedures (cannot be verified from chain alone)
+1. **Governance & Admin Rights** — who holds the keys, what can they do, is there a timelock, can it be bypassed, how concentrated is voting power.
+2. **Team & Operations** — team track record, incident response plan, external dependencies.
+3. **Key Management & Certifications** — SOC 2 / ISO 27001, HSM / MPC custody, pentest, operational segregation.
+
+#### C. Track Record — historical signal (what has actually happened, not what could theoretically happen)
+1. **Security Incidents History** — prior exploits, near-misses, fund recovery outcomes.
+2. **Battle-Tested Duration** — time live, peak TVL handled, protocol age vs TVL.
+3. **Audit Recency** — stale audits weaken the signal from Dimension A.1.
+4. **TVL Stability** — 7d/30d/90d trends, sharp declines, withdrawal patterns.
+5. **Incident Response Capability** — emergency pause latency, historical response examples.
 
 ### 3. Quantitative Metrics
 

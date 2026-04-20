@@ -1,7 +1,7 @@
 ---
-name: defi-security-audit
-description: Analyze a DeFi protocol for vulnerabilities, mechanism safety, and risk factors. Use when the user wants to audit a DeFi project, check protocol security, or assess risk. Trigger words include "audit defi", "analyze protocol", "check security", "defi risk", "protocol vulnerability", "is it safe".
-version: 1.2.0
+name: defi-risk-analysis
+description: Analyze a DeFi protocol's risk profile across smart contract, off-chain, and track-record dimensions. Use when the user wants a risk analysis of a DeFi project, to check protocol security, or to assess risk. Trigger words include "risk analysis", "analyze protocol", "audit defi", "check security", "defi risk", "protocol vulnerability", "is it safe".
+version: 2.0.0
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 metadata:
   openclaw:
@@ -13,9 +13,11 @@ metadata:
         - solana
 ---
 
-# DeFi Security Audit Skill
+# DeFi Risk Analysis Skill
 
-Perform a comprehensive security and mechanism analysis of a DeFi protocol. This skill systematically evaluates governance, oracle design, admin privileges, economic mechanisms, and historical risk factors.
+Perform a comprehensive risk analysis of a DeFi protocol. This skill systematically evaluates smart contract risk, off-chain risk (governance, team, operations), and track record (historical incidents, battle-testing, response capability).
+
+This is a structured **risk analysis**, NOT a formal smart contract audit — it reviews publicly available information and on-chain state to surface risk signals. Formal audits require line-by-line code review by professional auditing firms.
 
 ## Input
 
@@ -28,7 +30,7 @@ The user provides one or more of:
 
 ### Step 0: Quick Triage (Red Flag Scan)
 
-Before deep analysis, run a quick triage to decide audit priority:
+Before deep analysis, run a quick triage to decide analysis priority:
 
 1. **DeFiLlama data check**:
    First, resolve the protocol name to the correct DeFiLlama slug (slugs are non-obvious, e.g., "maker" not "sky", "pancakeswap" not "pancake-swap"):
@@ -72,7 +74,7 @@ Before deep analysis, run a quick triage to decide audit priority:
    **Error handling**: GoPlus is a free API with undocumented rate limits. If the API returns an error, empty result, or times out:
    - Record "GoPlus: UNAVAILABLE" in the report rather than omitting the section
    - Wait 5 seconds and retry once
-   - If still failing, proceed with the audit without GoPlus data and note the gap in Information Gaps
+   - If still failing, proceed with the analysis without GoPlus data and note the gap in Information Gaps
 
 3. **GoPlus address check** (optional): If specific admin/deployer addresses are known, check for malicious history:
    ```bash
@@ -191,15 +193,53 @@ Use web search to collect the following. Run these specific queries (replace `{p
 2. **Protocol type**: lending, DEX, perps, yield, bridge, etc.
 3. **Architecture**: key smart contracts, upgrade mechanisms
    - Search: `"{protocol}" docs architecture OR contracts OR "smart contract"`
-4. **Security incidents and audits**:
+4. **Security incidents**:
    - Search: `"{protocol}" exploit OR hack OR vulnerability OR "security incident"`
    - Search: `"{protocol}" site:rekt.news`
-   - Search: `"{protocol}" audit report site:github.com`
-5. **Governance and admin configuration**:
+   - Search: `"{protocol}" post-mortem OR postmortem`
+
+5. **Audit discovery** — run these sources IN ORDER and deduplicate. Missing an audit is a common failure mode (e.g., Apyx publishes Quantstamp/Certora/Zellic reports at `docs.apyx.fi/resources/audits` that generic web search often misses). Do not stop at the first source — cross-check all four.
+
+   a. **DeFiLlama protocol payload** (authoritative if populated). From the Step 0 data, parse these fields:
+      ```bash
+      curl -s 'https://api.llama.fi/protocol/{slug}' | jq '{audits, audit_note, audit_links}'
+      ```
+      - `audits`: numeric count (0/1/2/3)
+      - `audit_note`: free-text summary
+      - `audit_links`: array of URLs to audit PDFs
+
+   b. **Protocol documentation** — try these paths explicitly (substitute the protocol's docs domain; many use `docs.{domain}` or `{domain}/docs`):
+      ```
+      https://docs.{domain}/audits
+      https://docs.{domain}/resources/audits
+      https://docs.{domain}/security/audits
+      https://docs.{domain}/security
+      https://{domain}/audits
+      https://{domain}/security
+      ```
+      Use WebFetch to pull each candidate page. Many protocols list audits here that are not indexed on DeFiLlama. Record firm name, date, and PDF URL for each.
+
+   c. **GitHub audits folder** — check the protocol's main contracts repo for an `audits/` or `/audit/` directory:
+      ```
+      https://github.com/{org}/{repo}/tree/main/audits
+      https://github.com/{org}/audits
+      https://github.com/{org}/{repo}-audits
+      ```
+      Trail of Bits, ConsenSys Diligence, OpenZeppelin, Zellic, Spearbit, Cantina commonly drop PDFs here.
+
+   d. **Web search fallback** (only after a/b/c are exhausted):
+      - Search: `"{protocol}" audit report site:github.com`
+      - Search: `"{protocol}" audit filetype:pdf`
+      - Search: `site:code4rena.com "{protocol}"` (contest audits)
+      - Search: `site:sherlock.xyz "{protocol}"` (contest audits)
+
+   For each discovered audit, record: firm, date, scope/commit hash (if cited in the report), and source (DeFiLlama / docs / GitHub / search). If DeFiLlama's count differs from what you found in b/c, use your discovered list as authoritative and note the DeFiLlama gap under Information Gaps.
+
+6. **Governance and admin configuration**:
    - Search: `"{protocol}" multisig OR timelock OR governance OR "admin key"`
-6. **Bug bounty**:
+7. **Bug bounty**:
    - Search: `"{protocol}" site:immunefi.com`
-7. **Peer comparison**: identify 2-3 comparable protocols for benchmarking. Selection criteria:
+8. **Peer comparison**: identify 2-3 comparable protocols for benchmarking. Selection criteria:
    - **Same category** (e.g., lending vs lending, DEX vs DEX, perps vs perps)
    - **Similar TVL tier**: within 5x of each other (e.g., $1B protocol compared to $200M-$5B peers, not $50M or $50B)
    - **Prefer same chain** when possible, but cross-chain is acceptable if same-chain peers are unavailable
@@ -443,6 +483,89 @@ Add to the Smart Contract Security section of the risk report:
 **Source code review conclusion**: [summary of findings]
 ```
 
+#### 5.5 Audited vs Deployed Drift
+
+The most commonly ignored smart-contract risk is that audited code is NOT what is running in production. This can happen in several ways:
+
+- The team commissions an audit, then deploys a NEWER version that was never re-audited.
+- A proxy's implementation is upgraded after the audit without a new audit round.
+- The audit covers only a subset of the deployed contracts.
+- The audit was performed on a commit that was never deployed (vaporware audit).
+
+This sub-step cross-references what was audited against what is running. Skip only if (a) no audits exist OR (b) all contracts are closed-source AND not verified on any explorer.
+
+##### 5.5.1 Extract Audit Scope
+
+From each audit report discovered in Step 1.5, record:
+
+- **Firm** and **date**
+- **Commit hash / git tag** reviewed (most reports state this in the Scope or Methodology section)
+- **Contracts in scope** (list of file names or addresses)
+- **Findings status** (how many fixed vs acknowledged vs unresolved)
+
+If a report does NOT cite a commit or tag, flag as HIGH info gap — the audit cannot be independently reproduced or re-verified.
+
+##### 5.5.2 Post-Audit Upgrade Detection
+
+For each known proxy contract on an EVM chain, check the implementation's deployment timestamp against the latest audit date.
+
+```bash
+./scripts/onchain-check.sh contract-age <address> <chain_id> [api_key]
+```
+Returns the creation timestamp of the contract AND (if it is a proxy) the current implementation's deployment timestamp.
+
+Risk rating (use the CURRENT implementation's creation date):
+
+- Implementation created BEFORE last audit date → LOW (audited code is running)
+- Implementation created AFTER last audit but within 90 days of a re-audit announcement → LOW
+- Implementation created AFTER last audit, NO re-audit → HIGH (post-audit drift)
+- 3+ post-audit upgrades detected (scan proxy `Upgraded` events for a full history) → CRITICAL
+
+To enumerate all historical upgrades for a proxy, query `Upgraded(address)` events via Etherscan's `getLogs`:
+
+```bash
+# EIP-1967 Upgraded event topic: 0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b
+curl -s "https://api.etherscan.io/api?module=logs&action=getLogs&address={proxy}&topic0=0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b&apikey={key}"
+```
+Each log entry is an implementation change; the log timestamp is an upgrade event.
+
+##### 5.5.3 Source Diff (when audit commit is cited)
+
+If the audit report cites a commit and the deployed source is verified on Etherscan:
+
+1. Clone the repo at the audited commit: `git clone {repo} && git checkout {commit}`
+2. Fetch Etherscan's verified source (returned by the `etherscan` subcommand of `onchain-check.sh`) and save it as local files.
+3. Compare file-by-file. Useful signals:
+   - **File set diff** — are the deployed file names a superset/subset of the audit scope?
+   - **Line count delta** per file — flag >5% change.
+   - **New admin functions** — grep the deployed source for `onlyOwner`, `onlyRole`, `_checkRole` modifier uses that do NOT exist in the audited source. Any new admin function added post-audit is HIGH.
+   - **New mint / upgrade / setOracle / setFeed** functions — CRITICAL if added post-audit without re-audit.
+   - **Removed checks** — if `require(...)` statements decreased, scrutinize carefully.
+
+This is approximate — not a formal audit. It catches obvious drift (new admin functions, removed checks, added backdoors) but can miss subtle logic changes. For definitive matching, compile the audited commit with the same solc version + optimizer settings and compare bytecode; that is out of scope for this skill.
+
+##### 5.5.4 Report Format
+
+Populate sub-category **A.2 Audited vs Deployed Drift** in the Risk Summary using this format:
+
+```
+#### A.2 Audited vs Deployed Drift
+
+| Audit | Date | Commit Cited | Scope | Deployed Match? |
+|---|---|---|---|---|
+| Trail of Bits | 2024-08-15 | a1b2c3 | Vault, PriceFeed | Partial |
+| Certora | 2025-03-10 | d4e5f6 | Vault | Yes |
+
+**Post-audit implementation changes**:
+- Proxy 0x...abc: current impl deployed 2026-02-14 (6 months after Trail of Bits audit, no re-audit)
+- Proxy 0x...def: matches audited commit
+
+**Drift rating**: HIGH
+**Justification**: Vault implementation upgraded 2026-02-14 with no re-audit announcement. Source diff shows 2 new `onlyOwner` functions (setFeeTier, setReserveFactor) not in the audited source.
+```
+
+If the protocol has no proxies and all contracts are immutable, A.2 can be rated LOW with justification "all contracts immutable, no post-deployment drift possible".
+
 ### Step 6: Cross-Chain & Bridge Risk
 
 Skip this step if the protocol operates on a single chain with no bridge dependencies.
@@ -550,14 +673,14 @@ Run automated on-chain checks using `./scripts/onchain-check.sh`. Execute ALL ap
 #### Error handling:
 - If any API returns an error or is unavailable, record "API_UNAVAILABLE" in the report
 - Note the gap in the Information Gaps section
-- Never block the audit due to API failures -- proceed with available data
+- Never block the analysis due to API failures -- proceed with available data
 
 ### Step 9: Generate Risk Report
 
 Compile findings into a structured report:
 
 ```
-# DeFi Security Audit: {Protocol Name}
+# DeFi Risk Analysis: {Protocol Name}
 
 ## Overview
 - Protocol: {name}
@@ -566,7 +689,7 @@ Compile findings into a structured report:
 - TVL: {tvl}
 - TVL Trend: {7d}% / {30d}% / {90d}%
 - Launch Date: {date}
-- Audit Date: {today}
+- Analysis Date: {today}
 - Valid Until: {today + 90 days} (or sooner if: TVL changes >30%, governance upgrade, or security incident)
 - Source Code: Open / Closed / Partial
 
@@ -604,51 +727,119 @@ Compile findings into a structured report:
 
 ## Risk Summary
 
-| Category | Risk Level | Key Concern | Source | Verified? |
-|----------|-----------|-------------|--------|-----------|
-| Governance & Admin | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| Oracle & Price Feeds | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| Economic Mechanism | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| Smart Contract | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| Token Contract (GoPlus) | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| Off-Chain Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {O} | {Y/N/Partial} |
-| Operational Security | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {S/H/O} | {Y/N/Partial} |
-| **Overall Risk** | **{level}** | **{summary}** | | |
+Risk is grouped into **three top-level dimensions**. Each dimension has sub-categories; the dimension rating is the MAX of its sub-categories (with the weighting rules below).
 
-**Source column**: S = STRUCTURAL (current architecture risk), H = HISTORICAL (past incident signal), O = OPERATIONAL (off-chain controls risk). A category can have multiple sources (e.g., S/H).
+### A. Smart Contract Risk
 
-**Overall Risk aggregation rule** (mechanical -- do NOT override with judgment):
+Everything that depends on what the code does and how it's deployed on-chain.
+
+| Sub-category | Risk | Key Concern | Verified? |
+|---|---|---|---|
+| Code Quality & Audit Coverage | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Audited vs Deployed Drift | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
+| Oracle & Price Feeds | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Economic Mechanism | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Token Contract (GoPlus) | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
+| Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
+
+### B. Off-Chain Risk
+
+Everything that cannot be verified from the blockchain alone — people, processes, procedures.
+
+| Sub-category | Risk | Key Concern | Verified? |
+|---|---|---|---|
+| Governance & Admin Rights | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Team & Operations | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Key Management & Certifications | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+
+### C. Track Record
+
+Historical signal — what has actually happened, not what could theoretically happen.
+
+| Sub-category | Risk | Key Concern | Verified? |
+|---|---|---|---|
+| Security Incidents History | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Battle-Tested Duration | {LOW/MEDIUM/HIGH} | {one-line} | {Y/N/Partial} |
+| Audit Recency | {LOW/MEDIUM/HIGH} | {one-line} | {Y/N/Partial} |
+| TVL Stability | {LOW/MEDIUM/HIGH} | {one-line} | {Y/N/Partial} |
+| Incident Response Capability | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+
+### Top-Level Aggregation
+
+| Dimension | Risk Level | Key Driver |
+|---|---|---|
+| A. Smart Contract | {MAX of A} | {which sub-category drove it} |
+| B. Off-Chain | {MAX of B, Governance 2x} | {driver} |
+| C. Track Record | {MAX of C} | {driver} |
+| **Overall Risk** | **{level}** | **{summary}** |
+
+**Aggregation rule** (mechanical -- do NOT override with judgment):
 ```
-1. If ANY category is CRITICAL → Overall = CRITICAL
-2. If 2+ categories are HIGH → Overall = HIGH
-3. If 1 category is HIGH, or 3+ are MEDIUM → Overall = MEDIUM
-4. Otherwise → Overall = LOW
+1. DIMENSION rating = MAX of its sub-category ratings, subject to weighting:
+   - B. Off-Chain: Governance & Admin Rights counts 2x
+     (HIGH Governance alone → dimension = HIGH)
+   - A. Smart Contract: Cross-Chain & Bridge counts 2x if deployed on 5+ chains
+     (Kelp lesson — bridge risk cascades into composability)
 
-Governance & Admin counts as 2x weight (i.e., HIGH governance alone = 2 HIGHs → Overall HIGH).
-Cross-Chain & Bridge counts as 2x weight if protocol is deployed on 5+ chains (Kelp lesson).
-Categories rated N/A are excluded from the count.
+2. OVERALL rating aggregates across the 3 dimensions:
+   - ANY dimension CRITICAL    → Overall = CRITICAL
+   - 2+ dimensions HIGH        → Overall = HIGH
+   - 1 dimension HIGH, or
+     2+ dimensions MEDIUM      → Overall = MEDIUM
+   - Otherwise                 → Overall = LOW
+
+3. Sub-categories rated N/A are excluded from the MAX.
 ```
 
 ## Detailed Findings
 
-### 1. Governance & Admin Key
-{detailed analysis with specific findings}
+### A. Smart Contract Risk
 
-### 2. Oracle & Price Feeds
-{detailed analysis}
+#### A.1 Code Quality & Audit Coverage
+{audit count, firms, recency, findings fixed; bug bounty; battle testing; source code review from Step 5.4}
 
-### 3. Economic Mechanism
-{detailed analysis}
+#### A.2 Audited vs Deployed Drift
+{from Step 5.5 — is the audited code actually what's running in production?}
 
-### 4. Smart Contract Security
-{detailed analysis}
+#### A.3 Oracle & Price Feeds
+{detailed analysis from Step 3}
 
-### 5. Cross-Chain & Bridge (if applicable)
-{detailed analysis -- omit section if single-chain with no bridge dependencies}
+#### A.4 Economic Mechanism
+{detailed analysis from Step 4 — liquidation, insurance fund, rate model, withdrawal limits}
 
-### 6. Operational Security
-{detailed analysis}
+#### A.5 Token Contract (GoPlus)
+{GoPlus findings — omit if no token / Solana / API unavailable}
+
+#### A.6 Cross-Chain & Bridge
+{detailed analysis from Step 6 — omit if single-chain with no bridge dependencies}
+
+### B. Off-Chain Risk
+
+#### B.1 Governance & Admin Rights
+{from Step 2 — admin key surface, upgrade mechanism, governance process, token concentration, timelock bypass}
+
+#### B.2 Team & Operations
+{from Step 7.1, 7.2, 7.3 — team track record, incident response plan, dependencies}
+
+#### B.3 Key Management & Certifications
+{from Step 7.4 — SOC 2 / ISO 27001, HSM/MPC, custodial counterparty, pentest, operational segregation}
+
+### C. Track Record
+
+#### C.1 Security Incidents History
+{prior exploits, near-misses, postmortems, fund recovery outcomes}
+
+#### C.2 Battle-Tested Duration
+{time live, peak TVL handled, protocol age vs TVL}
+
+#### C.3 Audit Recency
+{date of most recent audit vs today; stale audits = weaker signal; also flag if code changed since last audit — see A.2}
+
+#### C.4 TVL Stability
+{7d/30d/90d trend, sharp declines, withdrawal patterns}
+
+#### C.5 Incident Response Capability
+{emergency pause latency (benchmark <15min), historical response examples, communication channels, bug bounty payouts}
 
 ## Critical Risks (if any)
 - {numbered list of CRITICAL or HIGH findings that could lead to fund loss}
@@ -733,9 +924,11 @@ Cross-reference against known DeFi attack vectors:
 - {these represent unknown risks -- absence of evidence is not evidence of absence}
 
 ## Disclaimer
-This analysis is based on publicly available information and web research.
-It is NOT a formal smart contract audit. Always DYOR and consider
-professional auditing services for investment decisions.
+This is a **risk analysis**, not a formal smart contract audit. It is based on
+publicly available information, on-chain state, and web research. Always DYOR
+and consider professional auditing services for investment decisions. "Risk
+analysis" and "audit" are distinct: only licensed auditing firms produce the
+latter.
 ```
 
 ### Step 10: Present Results
