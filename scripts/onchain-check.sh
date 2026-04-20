@@ -8,12 +8,14 @@
 # Usage:
 #   ./scripts/onchain-check.sh safe            <safe_address> [chain]
 #   ./scripts/onchain-check.sh etherscan       <contract_address> <chain_id> [api_key]
+#   ./scripts/onchain-check.sh contract-age    <contract_address> <chain_id> [api_key]
 #   ./scripts/onchain-check.sh solana-program  <program_id>
 #   ./scripts/onchain-check.sh solana-account  <address>
 #
 # Subcommands:
 #   safe            Query Gnosis Safe Transaction Service for multisig config
 #   etherscan       Query Etherscan-family APIs for contract verification/proxy
+#   contract-age    Deployment timestamp for a contract + its proxy impl (audit-drift signal)
 #   solana-program  Query Solana RPC for program upgrade authority
 #   solana-account  Query SolanaFM for account type and label
 #
@@ -152,10 +154,11 @@ validate_solana_address() {
 
 usage() {
     echo "Usage:"
-    echo "  $0 safe            <safe_address> [chain]                 Gnosis Safe multisig config"
+    echo "  $0 safe            <safe_address> [chain]                  Gnosis Safe multisig config"
     echo "  $0 etherscan       <contract_address> <chain_id> [api_key] Contract verification & proxy"
-    echo "  $0 solana-program  <program_id>                           Program upgrade authority"
-    echo "  $0 solana-account  <address>                              Account type via SolanaFM"
+    echo "  $0 contract-age    <contract_address> <chain_id> [api_key] Deployment timestamp (+impl) for audit-drift check"
+    echo "  $0 solana-program  <program_id>                            Program upgrade authority"
+    echo "  $0 solana-account  <address>                               Account type via SolanaFM"
     echo ""
     echo "Chain names (safe): ethereum, arbitrum, polygon, optimism, base, gnosis, avalanche"
     echo "Chain IDs (etherscan): 1=Ethereum, 56=BSC, 137=Polygon, 42161=Arbitrum, 10=Optimism, 8453=Base"
@@ -761,6 +764,149 @@ RPCEOF
     echo "========================================="
 }
 
+# ─── contract-age: Deployment timestamp for a contract (and its proxy impl) ─
+
+cmd_contract_age() {
+    local address="${1:-}"
+    local chain_id="${2:-}"
+    local api_key="${3:-}"
+
+    if [ -z "$address" ] || [ -z "$chain_id" ]; then
+        echo "Error: contract address and chain_id required"
+        echo "Usage: $0 contract-age <address> <chain_id> [api_key]"
+        exit 1
+    fi
+
+    validate_evm_address "$address"
+
+    # Resolve API key (same logic as cmd_etherscan)
+    if [ -z "$api_key" ]; then
+        api_key="${ETHERSCAN_API_KEY:-}"
+    fi
+    if [ -z "$api_key" ]; then
+        local env_file
+        for env_file in ".env" "../.env" "${BASH_SOURCE[0]%/*}/../.env"; do
+            if [ -f "$env_file" ]; then
+                local loaded
+                loaded=$(grep -E '^ETHERSCAN_API_KEY=' "$env_file" 2>/dev/null | head -1 | cut -d'=' -f2- | tr -d '"'"'" )
+                if [ -n "$loaded" ]; then
+                    api_key="$loaded"
+                    break
+                fi
+            fi
+        done
+    fi
+    if [ -z "$api_key" ]; then
+        echo "Error: Etherscan API key required. Set ETHERSCAN_API_KEY or pass as 3rd arg." >&2
+        echo "Get a free key at: https://etherscan.io/myapikey" >&2
+        echo "RESULT: UNAVAILABLE (no API key)"
+        return 1
+    fi
+
+    local base_url
+    base_url=$(etherscan_api_url "$chain_id") || exit 1
+
+    _fetch_contract_age() {
+        local addr="$1"
+        local label="$2"
+
+        # 1) Contract creation (creator + txHash)
+        local creation_resp
+        creation_resp=$(fetch "${base_url}?module=contract&action=getcontractcreation&contractaddresses=${addr}&apikey=${api_key}")
+        local creation_status
+        creation_status=$(echo "$creation_resp" | jq -r '.status // "0"' 2>/dev/null)
+        if [ "$creation_status" != "1" ]; then
+            echo "${label}: UNAVAILABLE (getcontractcreation returned $(echo "$creation_resp" | jq -r '.message // .result // "error"' 2>/dev/null))"
+            return 1
+        fi
+        local tx_hash creator
+        tx_hash=$(echo "$creation_resp" | jq -r '.result[0].txHash // empty')
+        creator=$(echo "$creation_resp" | jq -r '.result[0].contractCreator // empty')
+        if [ -z "$tx_hash" ]; then
+            echo "${label}: UNAVAILABLE (no creation tx in response)"
+            return 1
+        fi
+
+        # 2) Tx -> blockNumber (hex)
+        local tx_resp block_hex
+        tx_resp=$(fetch "${base_url}?module=proxy&action=eth_getTransactionByHash&txhash=${tx_hash}&apikey=${api_key}")
+        block_hex=$(echo "$tx_resp" | jq -r '.result.blockNumber // empty')
+        if [ -z "$block_hex" ] || [ "$block_hex" = "null" ]; then
+            echo "${label}: tx=$tx_hash (block unavailable)"
+            return 1
+        fi
+
+        # 3) Block -> timestamp (hex)
+        local block_resp ts_hex ts_dec ts_iso
+        block_resp=$(fetch "${base_url}?module=proxy&action=eth_getBlockByNumber&tag=${block_hex}&boolean=false&apikey=${api_key}")
+        ts_hex=$(echo "$block_resp" | jq -r '.result.timestamp // empty')
+        if [ -z "$ts_hex" ] || [ "$ts_hex" = "null" ]; then
+            echo "${label}: block=$block_hex (timestamp unavailable)"
+            return 1
+        fi
+        ts_dec=$((ts_hex))
+        # Portable ISO-8601 (works on macOS + Linux)
+        if date -u -r "$ts_dec" '+%Y-%m-%dT%H:%M:%SZ' >/dev/null 2>&1; then
+            ts_iso=$(date -u -r "$ts_dec" '+%Y-%m-%dT%H:%M:%SZ')
+        else
+            ts_iso=$(date -u -d "@$ts_dec" '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo "$ts_dec")
+        fi
+        # Also compute age in days
+        local now_dec age_days
+        now_dec=$(date -u +%s)
+        age_days=$(( (now_dec - ts_dec) / 86400 ))
+
+        echo "${label}:"
+        echo "  address:    $addr"
+        echo "  creator:    $creator"
+        echo "  tx:         $tx_hash"
+        echo "  deployed:   $ts_iso (${age_days} days ago)"
+        return 0
+    }
+
+    echo "Querying Etherscan for contract age..."
+    echo "Address: $address | Chain ID: $chain_id"
+    echo ""
+
+    # First, check if the address is a proxy
+    local src_resp is_proxy impl
+    src_resp=$(fetch "${base_url}?module=contract&action=getsourcecode&address=${address}&apikey=${api_key}")
+    is_proxy=$(echo "$src_resp" | jq -r '.result[0].Proxy // "0"')
+    impl=$(echo "$src_resp" | jq -r '.result[0].Implementation // empty')
+
+    echo "========================================="
+    echo " Contract Age Verification"
+    echo "========================================="
+    echo ""
+    _fetch_contract_age "$address" "Proxy (or standalone contract)"
+    echo ""
+
+    if [ "$is_proxy" = "1" ] && [ -n "$impl" ] && [ "$impl" != "null" ]; then
+        echo "Detected proxy. Current implementation: $impl"
+        echo ""
+        _fetch_contract_age "$impl" "Current implementation"
+        echo ""
+        echo "-----------------------------------------"
+        echo " Audit Drift Interpretation"
+        echo "-----------------------------------------"
+        echo "  Compare the 'Current implementation deployed' timestamp above"
+        echo "  against the date of the most recent audit report."
+        echo ""
+        echo "  - Deployed BEFORE last audit:  LOW  (audited code is running)"
+        echo "  - Deployed AFTER last audit,"
+        echo "    no re-audit announced:       HIGH (post-audit drift)"
+        echo "  - 3+ upgrades since audit:     CRITICAL"
+        echo ""
+        echo "  To enumerate ALL implementation changes, query Upgraded events:"
+        echo "    topic0 = 0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b"
+    else
+        echo "Not a proxy (standalone contract). No post-deployment drift possible"
+        echo "unless the contract exposes a self-upgrade or selfdestruct path."
+    fi
+    echo ""
+    echo "========================================="
+}
+
 # ─── Main entry point ──────────────────────────────────────────────
 
 cmd="${1:-}"
@@ -771,6 +917,7 @@ shift
 case "$cmd" in
     safe)           cmd_safe "$@" ;;
     etherscan)      cmd_etherscan "$@" ;;
+    contract-age)   cmd_contract_age "$@" ;;
     solana-program) cmd_solana_program "$@" ;;
     solana-account) cmd_solana_account "$@" ;;
     -h|--help)      usage ;;

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repo contains a Claude Code skill (`SKILL.md`) for performing comprehensive DeFi protocol security audits. It evaluates governance architecture, oracle design, admin privileges, economic mechanisms, and operational security.
+This repo contains a Claude Code skill (`SKILL.md`) that performs structured **risk analysis** on DeFi protocols across three dimensions: **smart contract**, **off-chain** (governance, team, operations), and **track record** (historical incidents, battle-testing, response capability). It is a research tool that surfaces risk signals — it is **not a formal smart contract audit**.
 
 ## Repo Structure
 
@@ -35,24 +35,29 @@ npx skills add truenorth-lj/crypto-project-security-skill
 clawhub install truenorth-lj/crypto-project-security-skill
 
 # Manual
-mkdir -p .claude/skills/defi-security-audit
-cp SKILL.md .claude/skills/defi-security-audit/SKILL.md
+mkdir -p .claude/skills/defi-risk-analysis
+cp SKILL.md .claude/skills/defi-risk-analysis/SKILL.md
 ```
 
 ## Trigger Phrases
 
-- `audit defi [protocol]`
+- `risk analysis of [protocol]`
 - `analyze protocol [protocol]`
 - `check security of [protocol]`
 - `defi risk [protocol]`
 - `is [protocol] safe?`
+- `audit defi [protocol]` (legacy trigger)
 
 ## Key Design Decisions
 
+- **Three-dimension risk model**: Risk is grouped into Smart Contract / Off-Chain / Track Record. Each dimension has sub-categories with independent ratings; the dimension is MAX of sub-categories with weighting rules (Governance 2x in Off-Chain, Cross-Chain 2x in Smart Contract for 5+ chain deployments). Overall risk aggregates across dimensions.
+- **"Risk analysis", not "audit"**: This skill produces a *risk analysis* — it surfaces signals from public data and on-chain state. Formal audits require licensed firms doing line-by-line review. The distinction is drilled into terminology, report titles, and the disclaimer.
 - **Governance-first approach**: Built in response to the Drift Protocol hack, which exploited governance architecture (not code bugs). The skill prioritizes admin key analysis, timelock verification, and multisig configuration.
-- **Source code review**: Targeted review of open-source contracts — verifies governance claims from docs against actual code, inventories admin functions, scans for high-impact vulnerability patterns (reentrancy, oracle manipulation, flash loan surfaces, proxy upgrade risks). Not a full line-by-line audit, but catches discrepancies between what teams claim and what the code does.
+- **Multi-source audit discovery**: Step 1.5 explicitly checks DeFiLlama payload → protocol docs paths (`/audits`, `/resources/audits`, `/security`) → GitHub `/audits` folder → web search fallback. Missing an audit (e.g., Apyx at `docs.apyx.fi/resources/audits`) is a common failure mode when relying solely on web search.
+- **Source code review (Step 5.4)**: Targeted review of open-source contracts — verifies governance claims from docs against actual code, inventories admin functions, scans for high-impact vulnerability patterns (reentrancy, oracle manipulation, flash loan surfaces, proxy upgrade risks). Not a full line-by-line audit, but catches discrepancies between what teams claim and what the code does.
+- **Audited vs Deployed drift (Step 5.5)**: Cross-references what was audited against what is running. Extracts audit commit hashes, detects post-audit proxy upgrades via `contract-age` subcommand, and (when commits are cited) supports source-level diff. A commonly ignored risk.
 - **Quantitative metrics**: Includes computable ratios (Insurance/TVL, Audit Coverage Score, etc.) to reduce subjectivity and enable cross-protocol comparison.
-- **Attack pattern matching**: Cross-references findings against three exploit categories (Drift-type, Euler/Mango-type, Ronin/Harmony-type) with specific indicator checklists.
+- **Attack pattern matching**: Cross-references findings against exploit categories (Drift-type, Euler/Mango-type, Ronin/Harmony-type, Kelp-type, Beanstalk-type, Cream/bZx-type, Curve-type, UST/LUNA-type) with specific indicator checklists.
 - **Information gap reporting**: Explicitly lists what could NOT be determined -- absence of public information is itself a risk signal.
 - **DeFiLlama API integration**: Uses `curl` against DeFiLlama endpoints for TVL data, audit counts, and protocol metadata.
 - **GoPlus Security API integration**: Automated token-level contract scanning (honeypot detection, owner privilege analysis, trading restrictions, holder concentration, malicious address checks) via free API. Complements the governance-first approach by covering contract-level risks that manual research may miss. Helper script at `scripts/goplus-check.sh`.
@@ -75,4 +80,5 @@ When adding new audit reports to `docs/examples/`:
 - No emojis
 - Risk ratings: LOW / MEDIUM / HIGH / CRITICAL (no other scales)
 - Mark unverified claims as "UNVERIFIED"
-- Always include disclaimer about this not being a formal audit
+- Always include disclaimer about this being a risk analysis, NOT a formal audit
+- Use "risk analysis" (not "audit") for this skill's output; reserve "audit" for third-party firm reports

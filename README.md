@@ -1,10 +1,10 @@
 # Crypto Project Security Skill
 
 [![skills.sh](https://img.shields.io/badge/skills.sh-install-blue)](https://skills.sh/truenorth-lj/crypto-project-security-skill)
-[![ClawHub](https://img.shields.io/badge/ClawHub-install-purple)](https://clawhub.ai/skills/defi-security-audit)
+[![ClawHub](https://img.shields.io/badge/ClawHub-install-purple)](https://clawhub.ai/skills/defi-risk-analysis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-A Claude Code skill that performs comprehensive security audits on DeFi protocols. Systematically evaluates governance, oracle design, admin privileges, economic mechanisms, and historical risk factors to identify vulnerabilities before they are exploited.
+A Claude Code skill that performs structured **risk analysis** on DeFi protocols across three dimensions: **smart contract**, **off-chain** (governance, team, operations), and **track record** (historical incidents, battle-testing, response capability). It surfaces risk signals — it is **not a formal smart contract audit**.
 
 ## Background
 
@@ -92,13 +92,13 @@ The skill correctly distinguished high-risk from low-risk protocols and identifi
 
 ## Installation
 
-### Via [skills.sh](https://skills.sh/truenorth-lj/crypto-project-security-skill/defi-security-audit) (Vercel)
+### Via [skills.sh](https://skills.sh/truenorth-lj/crypto-project-security-skill/defi-risk-analysis) (Vercel)
 
 ```bash
 npx skills add truenorth-lj/crypto-project-security-skill
 ```
 
-### Via [ClawHub](https://clawhub.ai/truenorth-lj/defi-security-audit) (OpenClaw)
+### Via [ClawHub](https://clawhub.ai/truenorth-lj/defi-risk-analysis) (OpenClaw)
 
 ```bash
 clawhub install truenorth-lj/crypto-project-security-skill
@@ -109,17 +109,18 @@ clawhub install truenorth-lj/crypto-project-security-skill
 Copy the `SKILL.md` file into your project's Claude Code skills directory:
 
 ```bash
-mkdir -p .claude/skills/defi-security-audit
-cp SKILL.md .claude/skills/defi-security-audit/SKILL.md
+mkdir -p .claude/skills/defi-risk-analysis
+cp SKILL.md .claude/skills/defi-risk-analysis/SKILL.md
 ```
 
 ### Usage
 
 In Claude Code, use any of these trigger phrases:
-- "audit defi [protocol name]"
-- "analyze protocol [protocol name]"  
+- "risk analysis of [protocol name]"
+- "analyze protocol [protocol name]"
 - "check security of [protocol name]"
 - "is [protocol name] safe?"
+- "audit defi [protocol name]" (legacy trigger, still works)
 
 ## Attack Pattern Detection
 
