@@ -1,0 +1,9 @@
+{
+  "name": "DeFi Security Audit",
+  "slug": "defi-security-audit",
+  "version": "v1.2.0",
+  "platforms": ["claude-code", "openclaw", "codex"],
+  "entry_point": "SKILL.md",
+  "description": "Comprehensive DeFi protocol security audits — governance, oracles, admin privileges, economic mechanisms, and attack pattern matching.",
+  "triggers": ["audit defi", "analyze protocol", "check security", "defi risk", "protocol vulnerability", "is it safe"]
+}
