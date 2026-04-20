@@ -40,28 +40,28 @@ This batch audit covered the top perpetual DEX exchanges by open interest and fi
 
 Rankings differ significantly between open interest (CoinGecko) and TVL (DeFiLlama). Both are shown for reference.
 
-| # (OI) | # (TVL) | Protocol | CoinGecko OI (BTC) | DeFiLlama TVL | Risk | Audited |
-|---------|---------|----------|-------------------|---------------|------|---------|
-| 1 | 1 | Hyperliquid | 100,119 | $4,867M | **HIGH** | Re-run |
-| -- | 2 | Jupiter | -- | $2,998M | **MEDIUM** | Re-run |
-| 2 | 3 | Aster | 26,166 | $1,142M | **HIGH** | New |
-| 4 | 4 | Lighter | 9,611 | $508M | **HIGH** | New |
-| 13 | 5 | GMX | 971 | $346M | **HIGH** | Re-run |
-| -- | 6 | Drift | -- | $242M | **CRITICAL** | Re-run |
-| 3 | 7 | edgeX | 12,112 | $191M | **HIGH** | New |
-| 9 | 8 | Extended | 4,357 | $175M | **HIGH** | New |
-| 14 | 9 | dYdX | 683 | $146M | **MEDIUM** | Re-run |
-| 6 | 10 | GRVT | 6,367 | $65M | **HIGH** | New |
-| 9 | 11 | Ostium | 1,933 | $60M | **HIGH** | New |
-| 10 | 12 | StandX | 1,797 | $52M | **HIGH** | New |
-| 17 | 13 | Paradex | 457 | $47M | **CRITICAL** | New |
-| -- | 14 | Synthetix | -- | $38M | **MEDIUM** | New |
-| 11 | 15 | ApeX Omni | 1,680 | $37M | **HIGH** | New |
-| 20 | 16 | Gains Network | 206 | $28M | **HIGH** | Re-run |
-| 8 | 17 | Antarctic | 3,676 | $10M | **CRITICAL** | New |
-| 5 | 18 | Variational Omni | 8,170 | $0 | **CRITICAL** | New |
-| -- | 19 | Vertex | -- | $0 (defunct) | **CRITICAL** | New |
-| -- | 20 | Zeta Markets | -- | $0 (defunct) | **CRITICAL** | Re-run |
+| # (OI) | # (TVL) | Protocol | CoinGecko OI (BTC) | DeFiLlama TVL | Risk | Audit Date |
+|---------|---------|----------|-------------------|---------------|------|------------|
+| 1 | 1 | [Hyperliquid](examples/hyperliquid-perps.md) | 100,119 | $4,867M | **HIGH** | 2026-04-20 |
+| -- | 2 | [Jupiter](examples/jupiter-solana-dex.md) | -- | $2,998M | **MEDIUM** | 2026-04-20 |
+| 2 | 3 | [Aster](examples/aster-perps.md) | 26,166 | $1,142M | **HIGH** | 2026-04-20 |
+| 4 | 4 | [Lighter](examples/lighter-perps.md) | 9,611 | $508M | **HIGH** | 2026-04-20 |
+| 13 | 5 | [GMX](examples/gmx-derivatives.md) | 971 | $346M | **HIGH** | 2026-04-20 |
+| -- | 6 | [Drift](examples/drift-protocol-post-hack-20260420.md) | -- | $242M | **CRITICAL** | 2026-04-20 |
+| 3 | 7 | [edgeX](examples/edgex-perps.md) | 12,112 | $191M | **HIGH** | 2026-04-20 |
+| 9 | 8 | [Extended](examples/extended-perps.md) | 4,357 | $175M | **HIGH** | 2026-04-20 |
+| 14 | 9 | [dYdX](examples/dydx-derivatives.md) | 683 | $146M | **MEDIUM** | 2026-04-20 |
+| 6 | 10 | [GRVT](examples/grvt-perps.md) | 6,367 | $65M | **HIGH** | 2026-04-20 |
+| 9 | 11 | [Ostium](examples/ostium-perps.md) | 1,933 | $60M | **HIGH** | 2026-04-20 |
+| 10 | 12 | [StandX](examples/standx-perps.md) | 1,797 | $52M | **HIGH** | 2026-04-20 |
+| 17 | 13 | [Paradex](examples/paradex-perps.md) | 457 | $47M | **CRITICAL** | 2026-04-20 |
+| -- | 14 | [Synthetix](examples/synthetix-perps.md) | -- | $38M | **MEDIUM** | 2026-04-20 |
+| 11 | 15 | [ApeX Omni](examples/apex-omni-perps.md) | 1,680 | $37M | **HIGH** | 2026-04-20 |
+| 20 | 16 | [Gains Network](examples/gains-network-perps.md) | 206 | $28M | **HIGH** | 2026-04-20 |
+| 8 | 17 | [Antarctic](examples/antarctic-perps.md) | 3,676 | $10M | **CRITICAL** | 2026-04-20 |
+| 5 | 18 | [Variational Omni](examples/variational-omni-perps.md) | 8,170 | $0 | **CRITICAL** | 2026-04-20 |
+| -- | 19 | [Vertex](examples/vertex-perps.md) | -- | $0 (defunct) | **CRITICAL** | 2026-04-20 |
+| -- | 20 | [Zeta Markets](examples/zeta-markets-tail-protocol.md) | -- | $0 (defunct) | **CRITICAL** | 2026-04-20 |
 
 **Key insight:** OI and TVL rankings diverge sharply. Variational Omni ranks #5 by OI but has $0 TVL (off-chain model). Jupiter and Drift don't appear in CoinGecko's perp OI rankings but are #2 and #6 by TVL. GMX ranks #13 by OI but #5 by TVL.
 
@@ -73,35 +73,35 @@ Rankings differ significantly between open interest (CoinGecko) and TVL (DeFiLla
 
 New audits for perpetual DEX exchanges not previously covered.
 
-| # | Protocol | Triage Score | Risk | OI | Chain | Key Finding |
-|---|----------|-------------|------|-----|-------|-------------|
-| 1 | [Synthetix Perps](examples/synthetix-perps.md) | 67/100 | **MEDIUM** | -- | Multi | No timelock on pDAO; 4/8 multisig; doxxed founder (Kain Warwick); 7yr track record |
-| 2 | [edgeX](examples/edgex-perps.md) | 42/100 | **HIGH** | $903M | Multi | No multisig/timelock disclosed; $10K web-only bug bounty; single Stork oracle |
-| 3 | [Ostium](examples/ostium-perps.md) | 36/100 | **HIGH** | $144M | Arbitrum | 6+ audits (best in class) but governance fully opaque; no multisig addresses |
-| 4 | [Lighter](examples/lighter-perps.md) | 34/100 | **HIGH** | $720M | Multi | 21d timelock bypassable to 0s by 3/6 multisig; Oct 2025 sequencer outage |
-| 5 | [Extended](examples/extended-perps.md) | 32/100 | **HIGH** | $327M | Starknet | Doxxed ex-Revolut team; unverified multisig on Starknet; no bug bounty |
-| 6 | [ApeX Omni](examples/apex-omni-perps.md) | 24/100 | **HIGH** | $125M | Multi | Zero governance transparency; 0 DeFiLlama audits; no bug bounty |
-| 7 | [Aster](examples/aster-perps.md) | 22/100 | **HIGH** | $1.9B | Multi | Anonymous team; suspected wash trading; DeFiLlama delisted Oct 2025 |
-| 8 | [Paradex](examples/paradex-perps.md) | 22/100 | **CRITICAL** | $34M | Starknet | 2/5 multisig + zero timelock; can drain all $46.9M bridged USDC instantly |
-| 9 | [GRVT](examples/grvt-perps.md) | 21/100 | **HIGH** | $474M | zkSync | 2/3 multisig + 0s timelock; validium (off-chain DA); no published audits |
-| 10 | [Vertex](examples/vertex-perps.md) | 19/100 | **CRITICAL** | $0 | Arbitrum | Shut down Aug 2025; team acquired by Ink Foundation; DAO dissolved |
-| 11 | [Variational Omni](examples/variational-omni-perps.md) | 0/100 | **CRITICAL** | $0 | Arbitrum | $0 TVL; closed-source; unpublished audits; strong team but zero transparency |
-| 12 | [Antarctic](examples/antarctic-perps.md) | 0/100 | **CRITICAL** | $10M | Arbitrum | 0/100 data confidence; fully closed source; zero audits; anonymous team |
-| 13 | [StandX](examples/standx-perps.md) | 9/100 | **HIGH** | $52M | BSC | Perps engine zero audits; DUSD proxy no timelock; 48% TVL decline |
+| # | Protocol | Triage | Risk | Chain | Key Finding | Audit Date |
+|---|----------|--------|------|-------|-------------|------------|
+| 1 | [Synthetix Perps](examples/synthetix-perps.md) | 67 | **MEDIUM** | Multi | No timelock on pDAO; 4/8 multisig; doxxed founder; 7yr track record | 2026-04-20 |
+| 2 | [edgeX](examples/edgex-perps.md) | 42 | **HIGH** | Multi | No multisig/timelock disclosed; $10K bug bounty; single oracle | 2026-04-20 |
+| 3 | [Ostium](examples/ostium-perps.md) | 36 | **HIGH** | Arbitrum | 6+ audits but governance fully opaque; no multisig addresses | 2026-04-20 |
+| 4 | [Lighter](examples/lighter-perps.md) | 34 | **HIGH** | Multi | 21d timelock bypassable to 0s; Oct 2025 sequencer outage | 2026-04-20 |
+| 5 | [Extended](examples/extended-perps.md) | 32 | **HIGH** | Starknet | Doxxed ex-Revolut team; unverified multisig; no bug bounty | 2026-04-20 |
+| 6 | [ApeX Omni](examples/apex-omni-perps.md) | 24 | **HIGH** | Multi | Zero governance transparency; 0 DeFiLlama audits | 2026-04-20 |
+| 7 | [Aster](examples/aster-perps.md) | 22 | **HIGH** | Multi | Anonymous team; suspected wash trading; DeFiLlama delisted once | 2026-04-20 |
+| 8 | [Paradex](examples/paradex-perps.md) | 22 | **CRITICAL** | Starknet | 2/5 multisig + zero timelock; can drain all bridged USDC | 2026-04-20 |
+| 9 | [GRVT](examples/grvt-perps.md) | 21 | **HIGH** | zkSync | 2/3 multisig + 0s timelock; validium; no published audits | 2026-04-20 |
+| 10 | [Vertex](examples/vertex-perps.md) | 19 | **CRITICAL** | Arbitrum | Shut down Aug 2025; team acquired by Ink Foundation | 2026-04-20 |
+| 11 | [Variational Omni](examples/variational-omni-perps.md) | 0 | **CRITICAL** | Arbitrum | $0 TVL; closed-source; unpublished audits | 2026-04-20 |
+| 12 | [Antarctic](examples/antarctic-perps.md) | 0 | **CRITICAL** | Arbitrum | 0/100 confidence; closed source; zero audits; anon team | 2026-04-20 |
+| 13 | [StandX](examples/standx-perps.md) | 9 | **HIGH** | BSC | Perps engine zero audits; DUSD proxy no timelock | 2026-04-20 |
 
 ## Perp Exchange Re-Audits (7 Updated Reports)
 
 Previously audited perp protocols re-run with fresh 2026-04-20 data.
 
-| # | Protocol | Old Score | New Score | Risk Change | Key Update |
-|---|----------|-----------|-----------|-------------|------------|
-| 1 | [Hyperliquid](examples/hyperliquid-perps.md) | 60 | **55** | MEDIUM -> **HIGH** | CoreWriter godmode revelations; off-chain security gaps; bridge still 4 validators |
-| 2 | [Jupiter](examples/jupiter-solana-dex.md) | 62 | **62** | MEDIUM | DAO resumed; governance whale dominance (81.7%); Kelp contagion |
-| 3 | [dYdX](examples/dydx-derivatives.md) | 67 | **62** | MEDIUM | Insurance halved ($17M->$7M); third DPRK supply chain incident |
-| 4 | [GMX](examples/gmx-derivatives.md) | 52 | **4** | MEDIUM -> **HIGH** | GoPlus flags properly scored (-50); Kelp-type 7-chain bridge risk |
-| 5 | [Gains Network](examples/gains-network-perps.md) | -- | **19** | MEDIUM -> **HIGH** | GoPlus hidden_owner persists; bug bounty halved ($400K->$200K) |
-| 6 | [Drift](examples/drift-protocol-post-hack-20260420.md) | 35 | **13** | CRITICAL | Post-hack: all 7/7 flags exploited; $148M pledged vs $295M losses |
-| 7 | [Zeta Markets](examples/zeta-markets-tail-protocol.md) | 18 | **12** | CRITICAL | Confirmed defunct; team pivoted to Bullet; ZEX 70%+ concentration |
+| # | Protocol | Old Score | New Score | Risk Change | Key Update | Audit Date |
+|---|----------|-----------|-----------|-------------|------------|------------|
+| 1 | [Hyperliquid](examples/hyperliquid-perps.md) | 60 | **55** | MEDIUM -> **HIGH** | CoreWriter godmode; bridge still 4 validators | 2026-04-20 |
+| 2 | [Jupiter](examples/jupiter-solana-dex.md) | 62 | **62** | MEDIUM | DAO resumed; governance whale dominance (81.7%) | 2026-04-20 |
+| 3 | [dYdX](examples/dydx-derivatives.md) | 67 | **62** | MEDIUM | Insurance halved ($17M->$7M); DPRK supply chain | 2026-04-20 |
+| 4 | [GMX](examples/gmx-derivatives.md) | 52 | **4** | MEDIUM -> **HIGH** | GoPlus flags properly scored; Kelp-type bridge risk | 2026-04-20 |
+| 5 | [Gains Network](examples/gains-network-perps.md) | -- | **19** | MEDIUM -> **HIGH** | GoPlus hidden_owner; bounty halved ($400K->$200K) | 2026-04-20 |
+| 6 | [Drift](examples/drift-protocol-post-hack-20260420.md) | 35 | **13** | CRITICAL | Post-hack: 7/7 flags exploited; $148M vs $295M | 2026-04-20 |
+| 7 | [Zeta Markets](examples/zeta-markets-tail-protocol.md) | 18 | **12** | CRITICAL | Defunct; Bullet pivot; ZEX 70%+ concentration | 2026-04-20 |
 
 ### Perp Exchange Key Themes
 
@@ -128,18 +128,18 @@ Only 3 of 10 have meaningful bug bounty programs (Synthetix via Immunefi, Parade
 
 These 10 protocols fill gaps in our coverage of DeFiLlama's top protocols by TVL and emerging DeFi categories.
 
-| # | Protocol | Triage Score | Risk | TVL | Type | Key Finding |
-|---|----------|-------------|------|-----|------|-------------|
-| 1 | [Spark Liquidity Layer](examples/spark-liquidity-layer.md) | 69/100 | **MEDIUM** | $2.0B | Capital Allocator | Sky DAO governance heritage; $5M bounty; off-chain relayer opacity |
-| 2 | [Fluid](examples/fluid-lending-dex.md) | 64/100 | **MEDIUM** | $476M | Lending/DEX | 7+ audits; zero exploits in 7yr; governance multisig undisclosed |
-| 3 | [mETH (Mantle)](examples/mantle-meth-staking.md) | 54/100 | **MEDIUM** | $1.3B | Liquid Staking | 16 audits from 8 firms (best seen); zero timelock on upgrades |
-| 4 | [Aerodrome](examples/aerodrome-dex.md) | 54/100 | **MEDIUM** | $1B+ | DEX | Immutable core contracts; stale audits (all 2023); DNS hijack Nov 2025 |
-| 5 | [Circle USYC](examples/circle-usyc-rwa.md) | 52/100 | **MEDIUM** | $2.9B | RWA/Treasuries | Circle/DRW backed; no public audit report; governance opacity (RWA-structural) |
-| 6 | [Infrared](examples/infrared-berachain.md) | 44/100 | **HIGH** | $52M | PoL/Staking | 24 audits but governance opaque; TVL collapsed -97% from $1.9B peak |
-| 7 | [Spiko](examples/spiko-rwa.md) | 41/100 | **MEDIUM** | $1.2B | RWA/Treasuries | AMF regulated; Amundi partnership; stale Trail of Bits audit (2023) |
-| 8 | [Usual](examples/usual-stablecoin.md) | 41/100 | **HIGH** | $101M | Stablecoin | USD0++ depegged to $0.87 (Jan 2025); TVL -94.6%; 75.8% token concentration |
-| 9 | [Raydium](examples/raydium-dex.md) | 34/100 | **HIGH** | $1B+ | DEX | Upgrade authority appears EOA on-chain; zero timelock; 2022 key compromise |
-| 10 | [Resolv](examples/resolv-stablecoin.md) | 16/100 | **CRITICAL** | $57.6M | Stablecoin | Exploited March 2026 ($25M via AWS KMS compromise); protocol paused |
+| # | Protocol | Triage | Risk | TVL | Type | Key Finding | Audit Date |
+|---|----------|--------|------|-----|------|-------------|------------|
+| 1 | [Spark Liquidity Layer](examples/spark-liquidity-layer.md) | 69 | **MEDIUM** | $2.0B | Capital Allocator | Sky DAO governance; $5M bounty; relayer opacity | 2026-04-20 |
+| 2 | [Fluid](examples/fluid-lending-dex.md) | 64 | **MEDIUM** | $476M | Lending/DEX | 7+ audits; zero exploits in 7yr; multisig undisclosed | 2026-04-20 |
+| 3 | [mETH (Mantle)](examples/mantle-meth-staking.md) | 54 | **MEDIUM** | $1.3B | Liquid Staking | 16 audits from 8 firms; zero timelock on upgrades | 2026-04-20 |
+| 4 | [Aerodrome](examples/aerodrome-dex.md) | 54 | **MEDIUM** | $1B+ | DEX | Immutable core; stale audits (2023); DNS hijack Nov 2025 | 2026-04-20 |
+| 5 | [Circle USYC](examples/circle-usyc-rwa.md) | 52 | **MEDIUM** | $2.9B | RWA | Circle/DRW backed; no public audit report | 2026-04-20 |
+| 6 | [Infrared](examples/infrared-berachain.md) | 44 | **HIGH** | $52M | PoL/Staking | 24 audits but governance opaque; TVL -97% | 2026-04-20 |
+| 7 | [Spiko](examples/spiko-rwa.md) | 41 | **MEDIUM** | $1.2B | RWA | AMF regulated; Amundi partner; stale audits | 2026-04-20 |
+| 8 | [Usual](examples/usual-stablecoin.md) | 41 | **HIGH** | $101M | Stablecoin | USD0++ depegged; TVL -94.6%; 75.8% token concentration | 2026-04-20 |
+| 9 | [Raydium](examples/raydium-dex.md) | 34 | **HIGH** | $1B+ | DEX | Upgrade auth appears EOA; zero timelock; 2022 hack | 2026-04-20 |
+| 10 | [Resolv](examples/resolv-stablecoin.md) | 16 | **CRITICAL** | $57.6M | Stablecoin | Exploited March 2026 ($25M); protocol paused | 2026-04-20 |
 
 ### DeFi Protocol Key Themes
 
@@ -209,28 +209,28 @@ After this batch (including re-runs and 3 additional perp exchanges), the skill 
 
 All major perpetual DEX exchanges are now covered, ranked by DeFiLlama TVL:
 
-| # | Protocol | TVL | OI Rank | Risk | Triage |
-|---|----------|-----|---------|------|--------|
-| 1 | Hyperliquid | $4,867M | #1 | **HIGH** | 55 |
-| 2 | Jupiter | $2,998M | -- | **MEDIUM** | 62 |
-| 3 | Aster | $1,142M | #2 | **HIGH** | 22 |
-| 4 | Lighter | $508M | #4 | **HIGH** | 34 |
-| 5 | GMX | $346M | #13 | **HIGH** | 4 |
-| 6 | Drift | $242M | -- | **CRITICAL** | 13 |
-| 7 | edgeX | $191M | #3 | **HIGH** | 42 |
-| 8 | Extended | $175M | #9 | **HIGH** | 32 |
-| 9 | dYdX | $146M | #14 | **MEDIUM** | 62 |
-| 10 | GRVT | $65M | #6 | **HIGH** | 21 |
-| 11 | Ostium | $60M | #9 | **HIGH** | 36 |
-| 12 | StandX | $52M | #10 | **HIGH** | 9 |
-| 13 | Paradex | $47M | #17 | **CRITICAL** | 22 |
-| 14 | Synthetix | $38M | -- | **MEDIUM** | 67 |
-| 15 | ApeX Omni | $37M | #11 | **HIGH** | 24 |
-| 16 | Gains Network | $28M | #20 | **HIGH** | 19 |
-| 17 | Antarctic | $10M | #8 | **CRITICAL** | 0 |
-| 18 | Variational Omni | $0 | #5 | **CRITICAL** | 0 |
-| 19 | Vertex | $0 | -- | **CRITICAL** | 19 |
-| 20 | Zeta Markets | $0 | -- | **CRITICAL** | 12 |
+| # | Protocol | TVL | OI Rank | Risk | Triage | Audit Date |
+|---|----------|-----|---------|------|--------|------------|
+| 1 | [Hyperliquid](examples/hyperliquid-perps.md) | $4,867M | #1 | **HIGH** | 55 | 2026-04-20 |
+| 2 | [Jupiter](examples/jupiter-solana-dex.md) | $2,998M | -- | **MEDIUM** | 62 | 2026-04-20 |
+| 3 | [Aster](examples/aster-perps.md) | $1,142M | #2 | **HIGH** | 22 | 2026-04-20 |
+| 4 | [Lighter](examples/lighter-perps.md) | $508M | #4 | **HIGH** | 34 | 2026-04-20 |
+| 5 | [GMX](examples/gmx-derivatives.md) | $346M | #13 | **HIGH** | 4 | 2026-04-20 |
+| 6 | [Drift](examples/drift-protocol-post-hack-20260420.md) | $242M | -- | **CRITICAL** | 13 | 2026-04-20 |
+| 7 | [edgeX](examples/edgex-perps.md) | $191M | #3 | **HIGH** | 42 | 2026-04-20 |
+| 8 | [Extended](examples/extended-perps.md) | $175M | #9 | **HIGH** | 32 | 2026-04-20 |
+| 9 | [dYdX](examples/dydx-derivatives.md) | $146M | #14 | **MEDIUM** | 62 | 2026-04-20 |
+| 10 | [GRVT](examples/grvt-perps.md) | $65M | #6 | **HIGH** | 21 | 2026-04-20 |
+| 11 | [Ostium](examples/ostium-perps.md) | $60M | #9 | **HIGH** | 36 | 2026-04-20 |
+| 12 | [StandX](examples/standx-perps.md) | $52M | #10 | **HIGH** | 9 | 2026-04-20 |
+| 13 | [Paradex](examples/paradex-perps.md) | $47M | #17 | **CRITICAL** | 22 | 2026-04-20 |
+| 14 | [Synthetix](examples/synthetix-perps.md) | $38M | -- | **MEDIUM** | 67 | 2026-04-20 |
+| 15 | [ApeX Omni](examples/apex-omni-perps.md) | $37M | #11 | **HIGH** | 24 | 2026-04-20 |
+| 16 | [Gains Network](examples/gains-network-perps.md) | $28M | #20 | **HIGH** | 19 | 2026-04-20 |
+| 17 | [Antarctic](examples/antarctic-perps.md) | $10M | #8 | **CRITICAL** | 0 | 2026-04-20 |
+| 18 | [Variational Omni](examples/variational-omni-perps.md) | $0 | #5 | **CRITICAL** | 0 | 2026-04-20 |
+| 19 | [Vertex](examples/vertex-perps.md) | $0 | -- | **CRITICAL** | 19 | 2026-04-20 |
+| 20 | [Zeta Markets](examples/zeta-markets-tail-protocol.md) | $0 | -- | **CRITICAL** | 12 | 2026-04-20 |
 
 **Full index:** [audit-reports.md](audit-reports.md)
 
