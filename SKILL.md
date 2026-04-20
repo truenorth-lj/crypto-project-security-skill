@@ -1,7 +1,7 @@
 ---
 name: defi-security-audit
 description: Analyze a DeFi protocol for vulnerabilities, mechanism safety, and risk factors. Use when the user wants to audit a DeFi project, check protocol security, or assess risk. Trigger words include "audit defi", "analyze protocol", "check security", "defi risk", "protocol vulnerability", "is it safe".
-version: 1.1.0
+version: 1.2.0
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 metadata:
   openclaw:
@@ -308,6 +308,140 @@ Do NOT use compound ratings like "LOW-MEDIUM" -- pick exactly one level per cate
 - Peak TVL handled?
 - Any past exploits or near-misses?
 - Open source code?
+
+#### 5.4 Source Code Review
+
+If the protocol's smart contracts are open source (GitHub or verified on block explorer), perform a targeted source code review. This is NOT a full line-by-line audit — it focuses on verifying governance claims from Step 2 and detecting high-impact vulnerability patterns.
+
+**Skip this step if**: contracts are closed-source AND not verified on any block explorer.
+
+##### 5.4.1 Obtain Source Code
+
+Try these sources in order:
+1. **Etherscan/block explorer**: Fetch verified source from the chain's block explorer. For proxy contracts, fetch BOTH the proxy and implementation source.
+   ```bash
+   # Etherscan (Ethereum)
+   curl -s "https://api.etherscan.io/api?module=contract&action=getsourcecode&address=<address>&apikey=<key>"
+   # Arbiscan (Arbitrum)
+   curl -s "https://api.arbiscan.io/api?module=contract&action=getsourcecode&address=<address>&apikey=<key>"
+   ```
+2. **GitHub**: Search for the protocol's contract repository.
+   - Search: `"{protocol}" smart contracts site:github.com`
+   - Common patterns: `github.com/{org}/contracts`, `github.com/{org}/{protocol}-core`
+3. **Audit reports**: If no public repo exists, check if audit reports contain code snippets or contract interfaces.
+
+Record source availability: "Full source (GitHub + verified)", "Partial (verified on explorer only)", "Closed source".
+
+##### 5.4.2 Admin & Access Control Patterns
+
+Search the source code for these patterns. Each finding should cross-reference the governance analysis from Step 2.
+
+**Owner/admin functions** — search for functions that can modify critical state:
+```
+Search for: onlyOwner, onlyAdmin, onlyRole, onlyGovernance, _checkRole, requiresAuth
+Search for: function set*, function update*, function change*, function pause, function unpause
+Search for: function upgrade*, function migrate*, _authorizeUpgrade
+```
+
+For each admin function found, document:
+- What it can do (change parameters, pause, upgrade, drain)
+- What access control guards it (Ownable, AccessControl role, custom modifier)
+- Whether it has a timelock wrapper or can be called directly
+- Whether it matches claims from Step 2 (e.g., "team claims 48h timelock" — verify the timelock is actually enforced in code)
+
+**Proxy upgrade pattern** — identify which pattern is used:
+```
+Search for: TransparentUpgradeableProxy, UUPSUpgradeable, _authorizeUpgrade, ERC1967Upgrade
+Search for: Diamond, DiamondCut, LibDiamond (EIP-2535)
+Search for: Beacon, BeaconProxy, UpgradeableBeacon
+```
+- UUPS: upgrade logic is in the implementation — check `_authorizeUpgrade` for access control
+- Transparent: upgrade logic is in the ProxyAdmin — check who owns ProxyAdmin
+- Diamond: facets can be added/removed — check who controls `diamondCut`
+
+**Emergency/bypass roles** — verify claims about emergency powers:
+```
+Search for: emergency, guardian, pauser, EMERGENCY_ROLE, GUARDIAN_ROLE
+Search for: delay, setDelay, updateDelay, minDelay, getMinDelay
+```
+- Does the emergency role only pause, or can it upgrade/drain?
+- Can the timelock delay be set to 0? By whom?
+
+##### 5.4.3 Common Vulnerability Patterns
+
+Scan for these high-impact patterns:
+
+**Reentrancy**:
+```
+Search for: .call{value:, .call(, (bool success,) =
+Check: Is there a reentrancy guard (nonReentrant, ReentrancyGuard)?
+Check: Does the contract follow checks-effects-interactions pattern?
+```
+Flag if: external calls are made before state updates, AND no reentrancy guard exists.
+
+**Oracle manipulation**:
+```
+Search for: getPrice, latestAnswer, latestRoundData, getUnderlyingPrice, twap, TWAP
+Search for: slot0 (Uniswap V3 spot price — manipulable via flash loans)
+```
+Flag if: spot price is used without TWAP protection, OR single oracle with no fallback.
+
+**Flash loan attack surface**:
+```
+Search for: flashLoan, flashMint, IERC3156, IFlashLoanReceiver
+Check: Can flash-loaned tokens be used as collateral or voting power in the same transaction?
+```
+
+**Unchecked return values**:
+```
+Search for: .transfer(, .send(, .approve(
+Check: Are return values checked? (SafeERC20 usage = good)
+```
+
+**Centralization in token contract**:
+```
+Search for: mint(, burn(, _mint(, _burn(, blacklist, freeze, pause
+Check: Who can call these? Is there a cap on minting?
+```
+
+##### 5.4.4 Cross-Reference with Governance Claims
+
+This is the most important part. Compare what the code actually does vs. what the team/docs claim:
+
+| Claim from Step 2 | Code verification | Match? |
+|---|---|---|
+| "48h timelock on upgrades" | Check: is timelock enforced in proxy admin? Can it be bypassed? | |
+| "3/5 multisig controls admin" | Check: is the admin address actually the claimed multisig? | |
+| "Oracle uses Chainlink" | Check: is Chainlink actually imported and used? Any fallback? | |
+| "Insurance fund covers bad debt" | Check: does the liquidation flow actually transfer to insurance fund? | |
+| "Immutable core contracts" | Check: are there really no upgrade functions? No selfdestruct? | |
+
+Record any discrepancies as HIGH or CRITICAL findings.
+
+##### 5.4.5 Report Format
+
+Add to the Smart Contract Security section of the risk report:
+
+```
+#### Source Code Review
+
+**Source availability**: [Full/Partial/Closed]
+**Contracts reviewed**: [list of key contracts and addresses]
+
+**Admin function inventory**:
+| Function | Contract | Access Control | Timelock? | Impact |
+|----------|----------|---------------|-----------|--------|
+
+**Vulnerability scan**:
+| Pattern | Found? | Details | Severity |
+|---------|--------|---------|----------|
+
+**Governance claim verification**:
+| Claim | Code evidence | Verified? |
+|-------|-------------|-----------|
+
+**Source code review conclusion**: [summary of findings]
+```
 
 ### Step 6: Cross-Chain & Bridge Risk
 
