@@ -65,44 +65,6 @@ Rankings differ significantly between open interest (CoinGecko) and TVL (DeFiLla
 
 **Key insight:** OI and TVL rankings diverge sharply. Variational Omni ranks #5 by OI but has $0 TVL (off-chain model). Jupiter and Drift don't appear in CoinGecko's perp OI rankings but are #2 and #6 by TVL. GMX ranks #13 by OI but #5 by TVL.
 
----
-
-## Perp Exchange Audits (New)
-
-### Overview
-
-New audits for perpetual DEX exchanges not previously covered.
-
-| # | Protocol | Triage | Risk | Chain | Key Finding | Audit Date |
-|---|----------|--------|------|-------|-------------|------------|
-| 1 | [Synthetix Perps](examples/synthetix-perps.md) | 67 | **MEDIUM** | Multi | No timelock on pDAO; 4/8 multisig; doxxed founder; 7yr track record | 2026-04-20 |
-| 2 | [edgeX](examples/edgex-perps.md) | 42 | **HIGH** | Multi | No multisig/timelock disclosed; $10K bug bounty; single oracle | 2026-04-20 |
-| 3 | [Ostium](examples/ostium-perps.md) | 36 | **HIGH** | Arbitrum | 6+ audits but governance fully opaque; no multisig addresses | 2026-04-20 |
-| 4 | [Lighter](examples/lighter-perps.md) | 34 | **HIGH** | Multi | 21d timelock bypassable to 0s; Oct 2025 sequencer outage | 2026-04-20 |
-| 5 | [Extended](examples/extended-perps.md) | 32 | **HIGH** | Starknet | Doxxed ex-Revolut team; unverified multisig; no bug bounty | 2026-04-20 |
-| 6 | [ApeX Omni](examples/apex-omni-perps.md) | 24 | **HIGH** | Multi | Zero governance transparency; 0 DeFiLlama audits | 2026-04-20 |
-| 7 | [Aster](examples/aster-perps.md) | 22 | **HIGH** | Multi | Anonymous team; suspected wash trading; DeFiLlama delisted once | 2026-04-20 |
-| 8 | [Paradex](examples/paradex-perps.md) | 22 | **CRITICAL** | Starknet | 2/5 multisig + zero timelock; can drain all bridged USDC | 2026-04-20 |
-| 9 | [GRVT](examples/grvt-perps.md) | 21 | **HIGH** | zkSync | 2/3 multisig + 0s timelock; validium; no published audits | 2026-04-20 |
-| 10 | [Vertex](examples/vertex-perps.md) | 19 | **CRITICAL** | Arbitrum | Shut down Aug 2025; team acquired by Ink Foundation | 2026-04-20 |
-| 11 | [Variational Omni](examples/variational-omni-perps.md) | 0 | **CRITICAL** | Arbitrum | $0 TVL; closed-source; unpublished audits | 2026-04-20 |
-| 12 | [Antarctic](examples/antarctic-perps.md) | 0 | **CRITICAL** | Arbitrum | 0/100 confidence; closed source; zero audits; anon team | 2026-04-20 |
-| 13 | [StandX](examples/standx-perps.md) | 9 | **HIGH** | BSC | Perps engine zero audits; DUSD proxy no timelock | 2026-04-20 |
-
-## Perp Exchange Re-Audits (7 Updated Reports)
-
-Previously audited perp protocols re-run with fresh 2026-04-20 data.
-
-| # | Protocol | Old Score | New Score | Risk Change | Key Update | Audit Date |
-|---|----------|-----------|-----------|-------------|------------|------------|
-| 1 | [Hyperliquid](examples/hyperliquid-perps.md) | 60 | **55** | MEDIUM -> **HIGH** | CoreWriter godmode; bridge still 4 validators | 2026-04-20 |
-| 2 | [Jupiter](examples/jupiter-solana-dex.md) | 62 | **62** | MEDIUM | DAO resumed; governance whale dominance (81.7%) | 2026-04-20 |
-| 3 | [dYdX](examples/dydx-derivatives.md) | 67 | **62** | MEDIUM | Insurance halved ($17M->$7M); DPRK supply chain | 2026-04-20 |
-| 4 | [GMX](examples/gmx-derivatives.md) | 52 | **4** | MEDIUM -> **HIGH** | GoPlus flags properly scored; Kelp-type bridge risk | 2026-04-20 |
-| 5 | [Gains Network](examples/gains-network-perps.md) | -- | **19** | MEDIUM -> **HIGH** | GoPlus hidden_owner; bounty halved ($400K->$200K) | 2026-04-20 |
-| 6 | [Drift](examples/drift-protocol-post-hack-20260420.md) | 35 | **13** | CRITICAL | Post-hack: 7/7 flags exploited; $148M vs $295M | 2026-04-20 |
-| 7 | [Zeta Markets](examples/zeta-markets-tail-protocol.md) | 18 | **12** | CRITICAL | Defunct; Bullet pivot; ZEX 70%+ concentration | 2026-04-20 |
-
 ### Perp Exchange Key Themes
 
 **1. Governance is the #1 risk across all perp DEXs.**
