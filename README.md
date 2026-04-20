@@ -1,5 +1,9 @@
 # Crypto Project Security Skill
 
+[![skills.sh](https://img.shields.io/badge/skills.sh-install-blue)](https://skills.sh/truenorth-lj/crypto-project-security-skill)
+[![ClawHub](https://img.shields.io/badge/ClawHub-install-purple)](https://clawhub.ai/skills/defi-security-audit)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 A Claude Code skill that performs comprehensive security audits on DeFi protocols. Systematically evaluates governance, oracle design, admin privileges, economic mechanisms, and historical risk factors to identify vulnerabilities before they are exploited.
 
 ## Background
