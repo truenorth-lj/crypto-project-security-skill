@@ -49,7 +49,8 @@ cp SKILL.md .claude/skills/defi-security-audit/SKILL.md
 
 ## Key Design Decisions
 
-- **Governance-first approach**: Built in response to the Drift Protocol hack, which exploited governance architecture (not code bugs). The skill prioritizes admin key analysis, timelock verification, and multisig configuration over traditional code review.
+- **Governance-first approach**: Built in response to the Drift Protocol hack, which exploited governance architecture (not code bugs). The skill prioritizes admin key analysis, timelock verification, and multisig configuration.
+- **Source code review**: Targeted review of open-source contracts — verifies governance claims from docs against actual code, inventories admin functions, scans for high-impact vulnerability patterns (reentrancy, oracle manipulation, flash loan surfaces, proxy upgrade risks). Not a full line-by-line audit, but catches discrepancies between what teams claim and what the code does.
 - **Quantitative metrics**: Includes computable ratios (Insurance/TVL, Audit Coverage Score, etc.) to reduce subjectivity and enable cross-protocol comparison.
 - **Attack pattern matching**: Cross-references findings against three exploit categories (Drift-type, Euler/Mango-type, Ronin/Harmony-type) with specific indicator checklists.
 - **Information gap reporting**: Explicitly lists what could NOT be determined -- absence of public information is itself a risk signal.
