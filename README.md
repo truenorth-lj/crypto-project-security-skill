@@ -25,9 +25,9 @@ Given a protocol name, the skill:
 
 ## Audit Reports
 
-Validated against 76 protocols spanning DeFiLlama's top 100 by TVL plus top perp exchanges by open interest. Full index with all reports: **[docs/audit-reports.md](docs/audit-reports.md)**
+Validated against 79 protocols spanning DeFiLlama's top 100 by TVL plus all major perp exchanges (20 covered). Full index with all reports: **[docs/audit-reports.md](docs/audit-reports.md)**
 
-**Risk distribution:** 7 LOW | 42 MEDIUM | 19 HIGH | 8 CRITICAL
+**Risk distribution:** 7 LOW | 38 MEDIUM | 22 HIGH | 12 CRITICAL
 
 ### Top Protocols by TVL
 
@@ -41,7 +41,7 @@ Validated against 76 protocols spanning DeFiLlama's top 100 by TVL plus top perp
 | [**Morpho**](docs/examples/morpho-lending.md) | Lending | $7.06B | **LOW** | Immutable core (~650 LOC); 12+ audits; no admin keys |
 | [**Ethena**](docs/examples/ethena-stablecoin.md) | Synthetic Dollar | $6.64B | **MEDIUM** | Strong contracts; custodial/CEX counterparty risk |
 | [**Sky**](docs/examples/sky-lending-cdp.md) | CDP/Stablecoin | $6.58B | **LOW** | Pioneer CDP; strongest governance track record |
-| [**Hyperliquid**](docs/examples/hyperliquid-perps.md) | Perps | $4.79B | **MEDIUM** | 4-validator bridge; closed-source L1; DPRK recon |
+| [**Hyperliquid**](docs/examples/hyperliquid-perps.md) | Perps | $4.87B | **HIGH** | CoreWriter godmode; 4-validator bridge; closed-source L1 |
 | [**EtherFi**](docs/examples/etherfi-liquid-restaking.md) | Liquid Restaking | $4.8B | **MEDIUM** | Good audits; governance gaps; TVL decline |
 | [**Ondo**](docs/examples/ondo-rwa.md) | RWA/Treasuries | $3.51B | **MEDIUM** | 20+ audits; centralized admin; 59% team token |
 | [**Uniswap**](docs/examples/uniswap-dex.md) | DEX | $3.09B | **LOW** | No admin keys; 48h timelock; $15.5M bug bounty |
@@ -77,6 +77,12 @@ Validated against 76 protocols spanning DeFiLlama's top 100 by TVL plus top perp
 | [**Usual**](docs/examples/usual-stablecoin.md) | Stablecoin | $101M | **HIGH** | USD0++ depegged; TVL -94.6%; 75.8% token concentration |
 | [**GRVT**](docs/examples/grvt-perps.md) | Perps | $63.5M | **HIGH** | 2/3 multisig + 0s timelock; validium risk |
 | [**Infrared**](docs/examples/infrared-berachain.md) | Liquid Staking/PoL | $52M | **HIGH** | 24 audits but governance opaque; TVL -97% |
+| [**Drift (post-hack)**](docs/examples/drift-protocol-post-hack-20260420.md) | Perps | $241M | **CRITICAL** | All 7/7 pre-hack flags exploited; $148M pledged vs $295M losses |
+| [**Variational Omni**](docs/examples/variational-omni-perps.md) | Perps | $0 | **CRITICAL** | $0 TVL; closed-source; strong team but zero on-chain transparency |
+| [**Antarctic**](docs/examples/antarctic-perps.md) | Perps | $10M | **CRITICAL** | 0/100 data confidence; fully closed source; zero audits |
+| [**GMX**](docs/examples/gmx-derivatives.md) | Derivatives | $346M | **HIGH** | GoPlus hidden_owner; 7-chain Kelp-type bridge risk |
+| [**Gains Network**](docs/examples/gains-network-perps.md) | Perps | $28M | **HIGH** | GoPlus hidden_owner persists; bug bounty halved |
+| [**StandX**](docs/examples/standx-perps.md) | Perps | $52M | **HIGH** | Perps engine zero audits; DUSD proxy no timelock |
 
 The skill correctly distinguished high-risk from low-risk protocols and identified the specific Drift vulnerabilities that were later exploited.
 

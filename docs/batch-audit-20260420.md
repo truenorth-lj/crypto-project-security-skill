@@ -1,8 +1,8 @@
 # Batch Security Audit: Top Perp Exchanges + DeFi Protocols
 
 **Date:** 2026-04-20
-**Scope:** Top 10 perpetual DEX exchanges by open interest + 10 high-TVL DeFi protocols not previously covered
-**Total new audits:** 20 protocols
+**Scope:** All major perpetual DEX exchanges (CoinGecko top 10 by OI + DeFiLlama top by TVL) + 10 high-TVL DeFi protocols not previously covered + re-audit of 7 existing perp reports
+**Total audits:** 30 protocols (23 new + 7 re-runs)
 **Methodology:** [DeFi Security Audit Skill](../SKILL.md) -- governance-first framework with GoPlus token scanning, DeFiLlama data, on-chain verification, and 8-category hack pattern matching
 
 ---
@@ -20,20 +20,58 @@ This batch audit covered the top perpetual DEX exchanges by open interest and fi
 
 | Risk Level | Count | Protocols |
 |------------|-------|-----------|
-| **CRITICAL** | 3 | Resolv, Vertex, Paradex |
-| **HIGH** | 10 | Aster, edgeX, Lighter, GRVT, Extended, ApeX Omni, Ostium, Raydium, Usual, Infrared |
-| **MEDIUM** | 7 | Synthetix, Fluid, Aerodrome, mETH, Circle USYC, Spiko, Spark Liquidity Layer |
+| **CRITICAL** | 7 | Resolv, Vertex, Paradex, Variational Omni, Antarctic, Drift (post-hack), Zeta Markets |
+| **HIGH** | 14 | Hyperliquid, Aster, edgeX, Lighter, GRVT, Extended, ApeX Omni, Ostium, StandX, GMX, Gains Network, Raydium, Usual, Infrared |
+| **MEDIUM** | 9 | Synthetix, Jupiter, dYdX, Fluid, Aerodrome, mETH, Circle USYC, Spiko, Spark Liquidity Layer |
 | **LOW** | 0 | -- |
 
 **Zero protocols scored LOW.** This is notable -- our existing 56-protocol corpus has 7 LOW-risk protocols (Aave, Lido, Morpho, Sky, Uniswap, SparkLend, Compound). The absence of LOW-risk results in this batch reflects the fact that most mature, well-governed protocols were already covered.
 
+**Key rating changes from re-runs:**
+- Hyperliquid: MEDIUM -> **HIGH** (CoreWriter godmode, off-chain security gaps)
+- GMX: MEDIUM -> **HIGH** (GoPlus flags properly scored, Kelp-type bridge risk)
+- Gains Network: MEDIUM -> **HIGH** (GoPlus hidden_owner, bug bounty halved)
+- Zeta Markets: HIGH -> **CRITICAL** (confirmed defunct, triage 18->12)
+- Drift: CRITICAL -> **CRITICAL** (post-hack report; pre-hack predictions validated 7/7)
+
 ---
 
-## Perp Exchange Audits
+## Perp Exchange Rankings: CoinGecko OI vs DeFiLlama TVL
+
+Rankings differ significantly between open interest (CoinGecko) and TVL (DeFiLlama). Both are shown for reference.
+
+| # (OI) | # (TVL) | Protocol | CoinGecko OI (BTC) | DeFiLlama TVL | Risk | Audited |
+|---------|---------|----------|-------------------|---------------|------|---------|
+| 1 | 1 | Hyperliquid | 100,119 | $4,867M | **HIGH** | Re-run |
+| -- | 2 | Jupiter | -- | $2,998M | **MEDIUM** | Re-run |
+| 2 | 3 | Aster | 26,166 | $1,142M | **HIGH** | New |
+| 4 | 4 | Lighter | 9,611 | $508M | **HIGH** | New |
+| 13 | 5 | GMX | 971 | $346M | **HIGH** | Re-run |
+| -- | 6 | Drift | -- | $242M | **CRITICAL** | Re-run |
+| 3 | 7 | edgeX | 12,112 | $191M | **HIGH** | New |
+| 9 | 8 | Extended | 4,357 | $175M | **HIGH** | New |
+| 14 | 9 | dYdX | 683 | $146M | **MEDIUM** | Re-run |
+| 6 | 10 | GRVT | 6,367 | $65M | **HIGH** | New |
+| 9 | 11 | Ostium | 1,933 | $60M | **HIGH** | New |
+| 10 | 12 | StandX | 1,797 | $52M | **HIGH** | New |
+| 17 | 13 | Paradex | 457 | $47M | **CRITICAL** | New |
+| -- | 14 | Synthetix | -- | $38M | **MEDIUM** | New |
+| 11 | 15 | ApeX Omni | 1,680 | $37M | **HIGH** | New |
+| 20 | 16 | Gains Network | 206 | $28M | **HIGH** | Re-run |
+| 8 | 17 | Antarctic | 3,676 | $10M | **CRITICAL** | New |
+| 5 | 18 | Variational Omni | 8,170 | $0 | **CRITICAL** | New |
+| -- | 19 | Vertex | -- | $0 (defunct) | **CRITICAL** | New |
+| -- | 20 | Zeta Markets | -- | $0 (defunct) | **CRITICAL** | Re-run |
+
+**Key insight:** OI and TVL rankings diverge sharply. Variational Omni ranks #5 by OI but has $0 TVL (off-chain model). Jupiter and Drift don't appear in CoinGecko's perp OI rankings but are #2 and #6 by TVL. GMX ranks #13 by OI but #5 by TVL.
+
+---
+
+## Perp Exchange Audits (New)
 
 ### Overview
 
-Perpetual DEX exchanges were ranked by open interest from CoinGecko data. Previously covered perp protocols (Hyperliquid, Jupiter, GMX, dYdX, Gains Network, Drift, Zeta Markets) were excluded.
+New audits for perpetual DEX exchanges not previously covered.
 
 | # | Protocol | Triage Score | Risk | OI | Chain | Key Finding |
 |---|----------|-------------|------|-----|-------|-------------|
@@ -47,6 +85,23 @@ Perpetual DEX exchanges were ranked by open interest from CoinGecko data. Previo
 | 8 | [Paradex](examples/paradex-perps.md) | 22/100 | **CRITICAL** | $34M | Starknet | 2/5 multisig + zero timelock; can drain all $46.9M bridged USDC instantly |
 | 9 | [GRVT](examples/grvt-perps.md) | 21/100 | **HIGH** | $474M | zkSync | 2/3 multisig + 0s timelock; validium (off-chain DA); no published audits |
 | 10 | [Vertex](examples/vertex-perps.md) | 19/100 | **CRITICAL** | $0 | Arbitrum | Shut down Aug 2025; team acquired by Ink Foundation; DAO dissolved |
+| 11 | [Variational Omni](examples/variational-omni-perps.md) | 0/100 | **CRITICAL** | $0 | Arbitrum | $0 TVL; closed-source; unpublished audits; strong team but zero transparency |
+| 12 | [Antarctic](examples/antarctic-perps.md) | 0/100 | **CRITICAL** | $10M | Arbitrum | 0/100 data confidence; fully closed source; zero audits; anonymous team |
+| 13 | [StandX](examples/standx-perps.md) | 9/100 | **HIGH** | $52M | BSC | Perps engine zero audits; DUSD proxy no timelock; 48% TVL decline |
+
+## Perp Exchange Re-Audits (7 Updated Reports)
+
+Previously audited perp protocols re-run with fresh 2026-04-20 data.
+
+| # | Protocol | Old Score | New Score | Risk Change | Key Update |
+|---|----------|-----------|-----------|-------------|------------|
+| 1 | [Hyperliquid](examples/hyperliquid-perps.md) | 60 | **55** | MEDIUM -> **HIGH** | CoreWriter godmode revelations; off-chain security gaps; bridge still 4 validators |
+| 2 | [Jupiter](examples/jupiter-solana-dex.md) | 62 | **62** | MEDIUM | DAO resumed; governance whale dominance (81.7%); Kelp contagion |
+| 3 | [dYdX](examples/dydx-derivatives.md) | 67 | **62** | MEDIUM | Insurance halved ($17M->$7M); third DPRK supply chain incident |
+| 4 | [GMX](examples/gmx-derivatives.md) | 52 | **4** | MEDIUM -> **HIGH** | GoPlus flags properly scored (-50); Kelp-type 7-chain bridge risk |
+| 5 | [Gains Network](examples/gains-network-perps.md) | -- | **19** | MEDIUM -> **HIGH** | GoPlus hidden_owner persists; bug bounty halved ($400K->$200K) |
+| 6 | [Drift](examples/drift-protocol-post-hack-20260420.md) | 35 | **13** | CRITICAL | Post-hack: all 7/7 flags exploited; $148M pledged vs $295M losses |
+| 7 | [Zeta Markets](examples/zeta-markets-tail-protocol.md) | 18 | **12** | CRITICAL | Confirmed defunct; team pivoted to Bullet; ZEX 70%+ concentration |
 
 ### Perp Exchange Key Themes
 
@@ -141,14 +196,41 @@ The Drift-type governance attack pattern is by far the most prevalent risk in th
 
 ## Updated Portfolio Totals
 
-After this batch, the skill has audited **76 protocols** with the following distribution:
+After this batch (including re-runs and 3 additional perp exchanges), the skill has audited **79 protocols** with the following distribution:
 
 | Risk | Count | % |
 |------|-------|---|
-| LOW | 7 | 9.2% |
-| MEDIUM | 42 | 55.3% |
-| HIGH | 19 | 25.0% |
-| CRITICAL | 8 | 10.5% |
+| LOW | 7 | 8.9% |
+| MEDIUM | 38 | 48.1% |
+| HIGH | 22 | 27.8% |
+| CRITICAL | 12 | 15.2% |
+
+### Complete Perp Exchange Coverage (20 protocols)
+
+All major perpetual DEX exchanges are now covered, ranked by DeFiLlama TVL:
+
+| # | Protocol | TVL | OI Rank | Risk | Triage |
+|---|----------|-----|---------|------|--------|
+| 1 | Hyperliquid | $4,867M | #1 | **HIGH** | 55 |
+| 2 | Jupiter | $2,998M | -- | **MEDIUM** | 62 |
+| 3 | Aster | $1,142M | #2 | **HIGH** | 22 |
+| 4 | Lighter | $508M | #4 | **HIGH** | 34 |
+| 5 | GMX | $346M | #13 | **HIGH** | 4 |
+| 6 | Drift | $242M | -- | **CRITICAL** | 13 |
+| 7 | edgeX | $191M | #3 | **HIGH** | 42 |
+| 8 | Extended | $175M | #9 | **HIGH** | 32 |
+| 9 | dYdX | $146M | #14 | **MEDIUM** | 62 |
+| 10 | GRVT | $65M | #6 | **HIGH** | 21 |
+| 11 | Ostium | $60M | #9 | **HIGH** | 36 |
+| 12 | StandX | $52M | #10 | **HIGH** | 9 |
+| 13 | Paradex | $47M | #17 | **CRITICAL** | 22 |
+| 14 | Synthetix | $38M | -- | **MEDIUM** | 67 |
+| 15 | ApeX Omni | $37M | #11 | **HIGH** | 24 |
+| 16 | Gains Network | $28M | #20 | **HIGH** | 19 |
+| 17 | Antarctic | $10M | #8 | **CRITICAL** | 0 |
+| 18 | Variational Omni | $0 | #5 | **CRITICAL** | 0 |
+| 19 | Vertex | $0 | -- | **CRITICAL** | 19 |
+| 20 | Zeta Markets | $0 | -- | **CRITICAL** | 12 |
 
 **Full index:** [audit-reports.md](audit-reports.md)
 
