@@ -112,8 +112,7 @@ Before deep analysis, run a quick triage to decide analysis priority:
      [ ] GoPlus: can_take_back_ownership = 1
      [ ] No multisig (single EOA admin key)
      [ ] Single bridge provider for cross-chain deployments on 5+ chains (Kelp lesson)
-     [ ] Lending/CDP protocol accepts LRT, bridge token, or synthetic asset as >10% of collateral without a per-asset exposure cap (collateral-source risk -- Kelp-cascade lesson)
-     [ ] Lending/CDP protocol's largest single collateral asset exposure exceeds insurance/safety-module size (single-asset depeg = uncovered bad debt)
+     [ ] Lending/CDP protocol accepts LRT, bridge token, or synthetic asset as >10% of collateral without a per-asset exposure cap (collateral-source risk -- Kelp-cascade lesson; the insurance-vs-largest-exposure check is rated separately in Step 4.5 and must not also be flagged here to avoid double-counting)
 
    MEDIUM flags (-8 each):
      [ ] GoPlus: is_proxy = 1 AND no timelock on upgrades
@@ -124,7 +123,7 @@ Before deep analysis, run a quick triage to decide analysis priority:
      [ ] GoPlus: slippage_modifiable = 1
      [ ] GoPlus: transfer_pausable = 1
      [ ] No third-party security certification (SOC 2 / ISO 27001 / equivalent) for off-chain operations
-     [ ] Bridge token accepted as lending collateral on 3+ protocols without rate limits
+     [ ] **This protocol's** bridge/wrapped/LRT token is accepted as collateral on 3+ external lending protocols without rate limits (issuer-side downstream-cascade risk; for the inverse — this protocol *accepting* such collateral — see Step 4.5 / the HIGH flag above)
 
    LOW flags (-5 each):
      [ ] No documented timelock on admin actions
@@ -359,16 +358,25 @@ Multiple LRTs and synthetic assets may *appear* diversified but share the same b
 - This combined number is the realistic worst-case loss from a single bridge or issuer failure -- treat it as one position, not many.
 
 ##### 4.5.4 Insurance vs. Largest Exposure
-- Largest single-collateral exposure (or largest shared-bridge cluster from 4.5.3), in USD
+- Largest single-collateral exposure (or largest shared-bridge / shared-issuer cluster from 4.5.3), in USD
 - Insurance fund / safety module size, in USD
-- If insurance < largest exposure: bad debt from a single asset failure cannot be socialised -- rate as HIGH at minimum, CRITICAL if no rate limits or oracle delay buffer.
-- This absolute-dollar comparison supersedes the "Insurance Fund / TVL %" rule for lending protocols. A 2% Insurance/TVL ratio is meaningless if a single LRT is 30% of collateral.
+- This absolute-dollar comparison supersedes the "Insurance Fund / TVL %" rule for lending protocols. A 2% Insurance/TVL ratio is meaningless if a single asset is 30% of collateral.
+- The insurance vs. exposure delta is an INPUT to the 4.5.5 rating ladder below — do NOT also rate it independently here, otherwise the same condition is counted twice (once in 4.5.4, once in 4.5.5).
 
-##### 4.5.5 Rating Guidance
-- All collateral is native + per-asset caps + insurance > largest exposure → LOW
-- Some bridge/LRT collateral but capped + insurance ≥ largest cluster → MEDIUM
-- LRT/bridge/synthetic >10% of collateral with no per-asset cap, OR shared-bridge cluster > insurance → HIGH
-- LRT/bridge/synthetic is the dominant collateral AND no rate limit AND no circuit breaker on collateral price → CRITICAL
+##### 4.5.5 Rating Ladder (binding for sub-category A.5)
+
+Apply rows top-to-bottom; the first matching row is the rating. Thresholds use the largest single-asset exposure OR the largest shared-bridge / shared-issuer cluster from 4.5.3, whichever is greater.
+
+| Rating | Conditions (all must hold for the row) |
+|---|---|
+| CRITICAL | Largest exposure > 30% of collateral AND insurance < that exposure AND (no per-asset rate limit OR no oracle circuit breaker on that collateral) |
+| HIGH | Largest exposure > 10% of collateral AND any of: (a) collateral is LRT/bridge/synthetic without a per-asset cap, (b) insurance < largest exposure, (c) shared-bridge/issuer cluster > insurance |
+| MEDIUM | Some bridge/LRT/synthetic collateral exists, every such asset has a per-asset cap, AND insurance ≥ largest exposure |
+| LOW | All collateral is native (ETH, BTC, on-chain stablecoins), no single asset > 50% of collateral, AND insurance ≥ largest exposure |
+
+Notes:
+- A protocol with a single native asset (e.g., wstETH-dominant) at >50% of collateral and insurance < that exposure does NOT qualify for LOW — fall through to HIGH via row (b).
+- Cross-check findings here against the Kelp-type pattern checklist in Step 9; A.5 conditions and the Kelp-type indicators must agree, otherwise revisit one or the other.
 
 ### Step 5: Smart Contract Security
 
