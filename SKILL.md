@@ -373,7 +373,7 @@ Apply rows top-to-bottom; the first matching row is the rating. Thresholds use t
 |---|---|
 | CRITICAL | Largest exposure > 30% of collateral AND insurance < that exposure AND (no per-asset rate limit AND no oracle circuit breaker on that collateral). Missing only one of the two protections → falls through to HIGH. |
 | HIGH | Any of: (a) LRT/bridge/synthetic collateral exists without a binding per-asset cap (regardless of % — ungated growth is the risk), (b) largest exposure > 10% of collateral AND insurance < largest exposure, (c) shared-bridge/shared-issuer cluster size (USD) > insurance, (d) single native asset > 50% of collateral AND insurance < that exposure |
-| MEDIUM | Some bridge/LRT/synthetic collateral exists, every such asset has a binding per-asset cap, AND insurance ≥ largest exposure |
+| MEDIUM | Either: (i) some bridge/LRT/synthetic collateral exists, every such asset has a binding per-asset cap, AND insurance ≥ largest exposure; OR (ii) all collateral is native but a single asset > 50% of collateral AND insurance ≥ largest exposure (concentrated-but-insured native pool) |
 | LOW | All collateral is native (ETH, BTC, on-chain stablecoins), no single asset > 50% of collateral, AND insurance ≥ largest exposure |
 
 Notes:
