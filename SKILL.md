@@ -1,7 +1,7 @@
 ---
 name: defi-risk-analysis
 description: Analyze a DeFi protocol's risk profile across smart contract, off-chain, and track-record dimensions. Use when the user wants a risk analysis of a DeFi project, to check protocol security, or to assess risk. Trigger words include "risk analysis", "analyze protocol", "audit defi", "check security", "defi risk", "protocol vulnerability", "is it safe".
-version: 2.0.0
+version: 2.1.0
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch
 metadata:
   openclaw:
@@ -112,6 +112,7 @@ Before deep analysis, run a quick triage to decide analysis priority:
      [ ] GoPlus: can_take_back_ownership = 1
      [ ] No multisig (single EOA admin key)
      [ ] Single bridge provider for cross-chain deployments on 5+ chains (Kelp lesson)
+     [ ] Lending/CDP protocol accepts LRT, bridge token, or synthetic asset as collateral without a *binding* per-asset cap (supplyCap < 20% of total collateral TVL; see Step 4.5.5). This flag fires regardless of current % exposure -- ungated collateral can grow. Insurance-vs-largest-exposure is rated separately in Step 4.5 and must not also be flagged here.
 
    MEDIUM flags (-8 each):
      [ ] GoPlus: is_proxy = 1 AND no timelock on upgrades
@@ -122,7 +123,7 @@ Before deep analysis, run a quick triage to decide analysis priority:
      [ ] GoPlus: slippage_modifiable = 1
      [ ] GoPlus: transfer_pausable = 1
      [ ] No third-party security certification (SOC 2 / ISO 27001 / equivalent) for off-chain operations
-     [ ] Bridge token accepted as lending collateral on 3+ protocols without rate limits
+     [ ] **This protocol's** bridge/wrapped/LRT token is accepted as collateral on 3+ external lending protocols without rate limits (issuer-side downstream-cascade risk; for the inverse — this protocol *accepting* such collateral — see Step 4.5 / the HIGH flag above)
 
    LOW flags (-5 each):
      [ ] No documented timelock on admin actions
@@ -329,6 +330,57 @@ Do NOT use compound ratings like "LOW-MEDIUM" -- pick exactly one level per cate
 - Are there rate limits on withdrawals?
 - Can limits be changed by admin?
 - Is there a hard cap that even admin cannot override?
+
+#### 4.5 Collateral Source Risk (lending / CDP / money-market protocols only)
+
+Skip for non-lending protocols (DEX, perps without external collateral, single-asset vaults).
+
+The Kelp incident showed that a lending protocol's risk is dominated by the *worst* collateral it accepts, not the average. A single LRT, bridge token, or synthetic asset depeg can create bad debt that exceeds the insurance fund, even if every other collateral is pristine. Step 7.3 covers the inverse (this protocol's token used as collateral elsewhere); 4.5 covers collateral *accepted into* this protocol.
+
+##### 4.5.1 Inventory Accepted Collateral
+For each enabled collateral asset, record:
+- Asset symbol, contract address, current TVL deposited, current borrow against it
+- Asset category: native (ETH, BTC, stablecoin issued on-chain), LRT (rsETH, weETH, ezETH, pufETH), bridge/wrapped (any token whose backing lives on a different chain or in a custodian), synthetic (USDe, USDX, eUSD)
+- Issuer / source protocol (e.g., Kelp for rsETH, EtherFi for weETH, Renzo for ezETH)
+- Underlying messaging or bridge layer if applicable (LayerZero, Wormhole, Axelar, native bridge)
+
+##### 4.5.2 Per-Asset Exposure Caps
+- Is there a hard supply cap (`supplyCap`) per collateral, enforced in code?
+- Is there a borrow cap per asset?
+- Can caps be raised without a timelock?
+- Largest asset's deposited TVL as a % of total collateral TVL (concentration ratio)
+
+##### 4.5.3 Shared Bridge / Issuer Concentration
+Multiple LRTs and synthetic assets may *appear* diversified but share the same bridge layer or issuer. Identify:
+- All collaterals that ride the same bridge provider (e.g., rsETH + weETH + ezETH all on LayerZero)
+- All collaterals from the same issuer or its corporate group
+- Combined exposure across the shared dependency as a % of total collateral TVL
+- This combined number is the realistic worst-case loss from a single bridge or issuer failure -- treat it as one position, not many.
+
+##### 4.5.4 Insurance vs. Largest Exposure
+- Largest single-collateral exposure (or largest shared-bridge / shared-issuer cluster from 4.5.3), in USD
+- Insurance fund / safety module size, in USD
+- This absolute-dollar comparison supersedes the "Insurance Fund / TVL %" rule for lending protocols. A 2% Insurance/TVL ratio is meaningless if a single asset is 30% of collateral.
+- The insurance vs. exposure delta is an INPUT to the 4.5.5 rating ladder below — do NOT also rate it independently here, otherwise the same condition is counted twice (once in 4.5.4, once in 4.5.5).
+
+##### 4.5.5 Rating Ladder (binding for sub-category A.5)
+
+Apply rows top-to-bottom; the first matching row is the rating. Thresholds use the largest single-asset exposure OR the largest shared-bridge / shared-issuer cluster size (USD) from 4.5.3, whichever is greater.
+
+**"Per-asset cap" qualifier**: a cap counts only if it is *binding* — supplyCap < 20% of total collateral TVL. A 99%-of-TVL cap is treated as no cap.
+
+| Rating | Conditions (all must hold for the row) |
+|---|---|
+| CRITICAL | Largest exposure > 30% of collateral AND insurance < that exposure AND (no per-asset rate limit AND no oracle circuit breaker on that collateral). Missing only one of the two protections → falls through to HIGH. |
+| HIGH | Any of: (a) LRT/bridge/synthetic collateral exists without a binding per-asset cap (regardless of % — ungated growth is the risk), (b) largest exposure > 10% of collateral AND insurance < largest exposure, (c) shared-bridge/shared-issuer cluster size (USD) > insurance, (d) single native asset > 50% of collateral AND insurance < that exposure |
+| MEDIUM | Either: (i) some bridge/LRT/synthetic collateral exists, every such asset has a binding per-asset cap, AND insurance ≥ largest exposure; OR (ii) all collateral is native but a single asset > 50% of collateral AND insurance ≥ largest exposure (concentrated-but-insured native pool) |
+| LOW | All collateral is native (ETH, BTC, on-chain stablecoins), no single asset > 50% of collateral, AND insurance ≥ largest exposure |
+
+Notes:
+- The CRITICAL row requires BOTH protections missing (no rate limit AND no circuit breaker) on top of the >30% / underinsured conditions; missing exactly one protection stays at HIGH. This is the intentional reading of the AND.
+- A protocol with a single native asset (e.g., wstETH-dominant) at >50% of collateral and insurance < that exposure is HIGH via row (d), not LOW.
+- Sub-10% LRT/bridge/synthetic with no binding cap still rates HIGH via row (a) — small uncapped positions can grow.
+- Cross-check findings here against the Kelp-type pattern checklist in Step 9; A.5 conditions and the Kelp-type indicators must agree, otherwise revisit one or the other.
 
 ### Step 5: Smart Contract Security
 
@@ -700,7 +752,9 @@ Compile findings into a structured report:
 ## Quantitative Metrics
 | Metric | Value | Benchmark (peers) | Rating |
 |--------|-------|--------------------|--------|
-| Insurance Fund / TVL | {x}% | {peer avg}% | {rating} |
+| Insurance Fund / TVL | {x}% | {peer avg}% | {rating — for lending/CDP protocols this is informational only; the binding metric is the next row (see Step 4.5.4)} |
+| Insurance Fund (USD) vs Largest Single-Collateral Exposure (USD) | ${ins} vs ${exp} | -- | {rating} |
+| Largest Shared-Bridge / Shared-Issuer Collateral Cluster | ${cluster} ({pct}% of collateral) | -- | {rating} |
 | Audit Coverage Score | {x} | {peer avg} | {rating} |
 | Governance Decentralization | {x} | {peer avg} | {rating} |
 | Timelock Duration | {x}h | {peer avg}h | {rating} |
@@ -739,6 +793,7 @@ Everything that depends on what the code does and how it's deployed on-chain.
 | Audited vs Deployed Drift | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
 | Oracle & Price Feeds | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
 | Economic Mechanism | {LOW/MEDIUM/HIGH/CRITICAL} | {one-line} | {Y/N/Partial} |
+| Collateral Source Risk | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
 | Token Contract (GoPlus) | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
 | Cross-Chain & Bridge | {LOW/MEDIUM/HIGH/CRITICAL/N/A} | {one-line} | {Y/N/Partial} |
 
@@ -807,10 +862,13 @@ Historical signal — what has actually happened, not what could theoretically h
 #### A.4 Economic Mechanism
 {detailed analysis from Step 4 — liquidation, insurance fund, rate model, withdrawal limits}
 
-#### A.5 Token Contract (GoPlus)
+#### A.5 Collateral Source Risk
+{from Step 4.5 — only for lending/CDP/money-market protocols. Inventory of accepted collateral by category (native / LRT / bridge / synthetic), per-asset caps, shared-bridge or shared-issuer clusters, insurance vs largest exposure in absolute USD. Omit (mark N/A) for non-lending protocols.}
+
+#### A.6 Token Contract (GoPlus)
 {GoPlus findings — omit if no token / Solana / API unavailable}
 
-#### A.6 Cross-Chain & Bridge
+#### A.7 Cross-Chain & Bridge
 {detailed analysis from Step 6 — omit if single-chain with no bridge dependencies}
 
 ### B. Off-Chain Risk
