@@ -112,7 +112,7 @@ Before deep analysis, run a quick triage to decide analysis priority:
      [ ] GoPlus: can_take_back_ownership = 1
      [ ] No multisig (single EOA admin key)
      [ ] Single bridge provider for cross-chain deployments on 5+ chains (Kelp lesson)
-     [ ] Lending/CDP protocol accepts LRT, bridge token, or synthetic asset as >10% of collateral without a per-asset exposure cap (collateral-source risk -- Kelp-cascade lesson; the insurance-vs-largest-exposure check is rated separately in Step 4.5 and must not also be flagged here to avoid double-counting)
+     [ ] Lending/CDP protocol accepts LRT, bridge token, or synthetic asset as collateral without a *binding* per-asset cap (supplyCap < 20% of total collateral TVL; see Step 4.5.5). This flag fires regardless of current % exposure -- ungated collateral can grow. Insurance-vs-largest-exposure is rated separately in Step 4.5 and must not also be flagged here.
 
    MEDIUM flags (-8 each):
      [ ] GoPlus: is_proxy = 1 AND no timelock on upgrades
@@ -365,17 +365,21 @@ Multiple LRTs and synthetic assets may *appear* diversified but share the same b
 
 ##### 4.5.5 Rating Ladder (binding for sub-category A.5)
 
-Apply rows top-to-bottom; the first matching row is the rating. Thresholds use the largest single-asset exposure OR the largest shared-bridge / shared-issuer cluster from 4.5.3, whichever is greater.
+Apply rows top-to-bottom; the first matching row is the rating. Thresholds use the largest single-asset exposure OR the largest shared-bridge / shared-issuer cluster size (USD) from 4.5.3, whichever is greater.
+
+**"Per-asset cap" qualifier**: a cap counts only if it is *binding* — supplyCap < 20% of total collateral TVL. A 99%-of-TVL cap is treated as no cap.
 
 | Rating | Conditions (all must hold for the row) |
 |---|---|
-| CRITICAL | Largest exposure > 30% of collateral AND insurance < that exposure AND (no per-asset rate limit OR no oracle circuit breaker on that collateral) |
-| HIGH | Largest exposure > 10% of collateral AND any of: (a) collateral is LRT/bridge/synthetic without a per-asset cap, (b) insurance < largest exposure, (c) shared-bridge/issuer cluster > insurance |
-| MEDIUM | Some bridge/LRT/synthetic collateral exists, every such asset has a per-asset cap, AND insurance ≥ largest exposure |
+| CRITICAL | Largest exposure > 30% of collateral AND insurance < that exposure AND (no per-asset rate limit AND no oracle circuit breaker on that collateral). Missing only one of the two protections → falls through to HIGH. |
+| HIGH | Any of: (a) LRT/bridge/synthetic collateral exists without a binding per-asset cap (regardless of % — ungated growth is the risk), (b) largest exposure > 10% of collateral AND insurance < largest exposure, (c) shared-bridge/shared-issuer cluster size (USD) > insurance, (d) single native asset > 50% of collateral AND insurance < that exposure |
+| MEDIUM | Some bridge/LRT/synthetic collateral exists, every such asset has a binding per-asset cap, AND insurance ≥ largest exposure |
 | LOW | All collateral is native (ETH, BTC, on-chain stablecoins), no single asset > 50% of collateral, AND insurance ≥ largest exposure |
 
 Notes:
-- A protocol with a single native asset (e.g., wstETH-dominant) at >50% of collateral and insurance < that exposure does NOT qualify for LOW — fall through to HIGH via row (b).
+- The CRITICAL row requires BOTH protections missing (no rate limit AND no circuit breaker) on top of the >30% / underinsured conditions; missing exactly one protection stays at HIGH. This is the intentional reading of the AND.
+- A protocol with a single native asset (e.g., wstETH-dominant) at >50% of collateral and insurance < that exposure is HIGH via row (d), not LOW.
+- Sub-10% LRT/bridge/synthetic with no binding cap still rates HIGH via row (a) — small uncapped positions can grow.
 - Cross-check findings here against the Kelp-type pattern checklist in Step 9; A.5 conditions and the Kelp-type indicators must agree, otherwise revisit one or the other.
 
 ### Step 5: Smart Contract Security
@@ -748,7 +752,7 @@ Compile findings into a structured report:
 ## Quantitative Metrics
 | Metric | Value | Benchmark (peers) | Rating |
 |--------|-------|--------------------|--------|
-| Insurance Fund / TVL | {x}% | {peer avg}% | {rating} |
+| Insurance Fund / TVL | {x}% | {peer avg}% | {rating — for lending/CDP protocols this is informational only; the binding metric is the next row (see Step 4.5.4)} |
 | Insurance Fund (USD) vs Largest Single-Collateral Exposure (USD) | ${ins} vs ${exp} | -- | {rating} |
 | Largest Shared-Bridge / Shared-Issuer Collateral Cluster | ${cluster} ({pct}% of collateral) | -- | {rating} |
 | Audit Coverage Score | {x} | {peer avg} | {rating} |
